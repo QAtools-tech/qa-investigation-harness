@@ -113,6 +113,10 @@ should be given.
 14. Focused reviewers are evidence-only. They do not edit artifacts, approve
     risks, export plans, run tests, or author tests. The parent reconciles
     their cited findings; only the human decides risk status.
+15. Optional source adapters require an explicitly selected source and scope,
+    use read-only provider operations, and follow the same preview and human
+    confirmation boundary as local intake. Never write back, store credentials,
+    import provider status as human approval, or broaden a query silently.
 
 ## Artifact paths
 

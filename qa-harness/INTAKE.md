@@ -21,6 +21,12 @@ entry evidence and safe ID rules, see [`CONTRACT.md`](CONTRACT.md).
 - **Run or other evidence:** accept a cited excerpt for triage or direct
   validation. Do not claim JSON/run-report import support until a report
   format and fixture are selected.
+- **Connected source adapter:** when the user explicitly requests it and the
+  host has a configured adapter with the matching read capability, retrieve
+  only the requested source identity and scope. Normalize it under
+  [`adapters/CONTRACT.md`](adapters/CONTRACT.md), then show the ordinary intake
+  preview before any artifact write. If the adapter is missing, unavailable,
+  or lacks permission, name that result and keep the local/manual path usable.
 
 CSV import defaults to one selected case group per investigation. A row may
 contain a multiline field; embedded newlines do not create extra cases. If a
@@ -132,5 +138,7 @@ Never write credentials to artifacts. Before storing excerpts, redact values
 for password, token, secret, API key, authorization, and any project-configured
 sensitive field. If a source contains credentials or cannot be safely
 redacted, do not copy an excerpt; ask for a sanitized source or record only its
-locator and that it was withheld. Do not make external provider calls in this
-phase.
+locator and that it was withheld. External reads are allowed only through an
+explicitly configured adapter, scoped to the user's requested source, and
+under [`adapters/CONTRACT.md`](adapters/CONTRACT.md). Adapters never write to
+the provider.

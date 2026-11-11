@@ -13,6 +13,7 @@ Use the prerequisites below to choose an entry point. The stage files govern the
 | Action | Minimum evidence | Result or stop |
 |---|---|---|
 | Intake | Pasted/local case, Markdown plan, or evidence excerpt with a locator | Preview source, field mapping/grouping, and proposed ID; after human confirmation, write `qa-artifacts/<id>/investigation.md` with source-linked claims and missing inputs. |
+| Connected-source intake | Explicit source reference plus a configured adapter with the required read capability | Read only the caller-scoped source, then use the same preview, provenance, missing-input, conflict, redaction, and confirmation rules as local intake. If unavailable or denied, name the adapter error and retain manual intake as the fallback. |
 | Explore | Case with a scoped flow, confirmed non-production URL, and interactive access | Use Stage 1. Ask for missing environment or access before navigating. |
 | Model | Recorded observations with source locators and enough context to identify the flow | Use Stage 2. Mark unsupported transitions and persisted outcomes unknown. |
 | Challenge | Flow model with evidence and an identifiable expected behavior | Use Stage 3A. Record proposed risks, the correct oracle, and gaps. |
@@ -25,7 +26,7 @@ Report missing evidence by name and give the next action. Imported observations 
 
 ## Records and provenance
 
-Markdown remains the review format. For new investigations, use these record fields in the relevant artifact or a companion `investigation.md`. Use local IDs unique within each record kind and cite IDs explicitly. No new runtime required.
+Markdown remains the review format. For new investigations, use these record fields in the relevant artifact or a companion `investigation.md`. Use local IDs unique within each record kind and cite IDs explicitly. Manual intake requires no runtime; optional adapters use the documented Node.js contract.
 
 For imports, follow [`INTAKE.md`](INTAKE.md): preview and confirm before writing,
 keep original sources unchanged, preserve row/heading locators, and record

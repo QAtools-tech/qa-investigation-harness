@@ -20,6 +20,10 @@ No slash command here — user ask run stage, read `qa-harness/RULES.md` plus ma
 | "challenge" / Stage 3 | `qa-harness/stages/03-challenge.md` |
 | "validate" / Stage 5 | `qa-harness/stages/05-validate.md` |
 
+For a connected Jira/source request, also read `qa-harness/adapters/CONTRACT.md`
+and the provider adapter guide. Use only configured read methods and the
+user-selected scope; never write back to a provider.
+
 Codex project skills in `.agents/skills/` provide `$qa-intake`,
 `$qa-review-plan`, `$qa-status-resume`, `$qa-explore`, `$qa-model`,
 `$qa-challenge`, `$qa-validate`, `$qa-risk-review`, and

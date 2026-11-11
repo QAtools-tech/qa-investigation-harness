@@ -1,0 +1,12 @@
+{
+  "id": "10001",
+  "key": "QA-123",
+  "self": "https://example.atlassian.net/rest/api/3/issue/10001",
+  "fields": {
+    "summary": "Save a filter",
+    "description": "Steps:\n1. Open Filters.\n2. Save the filter.\nExpected: The filter remains available after reload.",
+    "project": { "key": "QA", "name": "Quality" },
+    "issuetype": { "name": "Test Case" },
+    "updated": "2026-11-10T10:00:00.000Z"
+  }
+}

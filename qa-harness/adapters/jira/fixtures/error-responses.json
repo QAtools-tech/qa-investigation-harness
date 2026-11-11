@@ -1,0 +1,6 @@
+{
+  "permissionDenied": { "status": 403, "message": "private example detail must not escape" },
+  "notFound": { "status": 404, "message": "private example detail must not escape" },
+  "rateLimited": { "status": 429, "message": "private example detail must not escape" },
+  "temporarilyUnavailable": { "status": 503, "message": "private example detail must not escape" }
+}

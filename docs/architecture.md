@@ -37,6 +37,8 @@ The boundary around the consuming project matters: this repository does not own 
 | Status/resume resolver | [`qa-harness/stages/00-status-and-resume.md`](../qa-harness/stages/00-status-and-resume.md) | Read-only state report and artifact-driven resume routing |
 | Stage instructions | [`qa-harness/stages/`](../qa-harness/stages/) | Tool-agnostic behavior for intake, plan review, explore, model, challenge, and validate |
 | Intake contract | [`qa-harness/INTAKE.md`](../qa-harness/INTAKE.md) | Provenance, source revisions, safe excerpts, and confirmation boundary |
+| Source adapter contract | [`qa-harness/adapters/CONTRACT.md`](../qa-harness/adapters/CONTRACT.md) | Optional read-only capabilities, normalized records, scoped paging, and errors |
+| Jira reference adapter | [`qa-harness/adapters/jira/`](../qa-harness/adapters/jira/README.md) | Configured Jira issue normalization; no Xray, Confluence, or writeback |
 | Focused reviewer contracts | [`qa-harness/stages/risk-reviewer.md`](../qa-harness/stages/risk-reviewer.md), [`qa-harness/stages/validation-reviewer.md`](../qa-harness/stages/validation-reviewer.md) | Evidence-only review inputs, output shape, and decision boundaries |
 | Artifact checker | [`qa-harness/checks/`](../qa-harness/checks/) | Deterministic, read-only artifact diagnostics for manual, optional hook, and CI use |
 | GitHub Copilot adapters | [`../.github/prompts/`](../.github/prompts/) | Prompt shape and arguments for VS Code/Copilot |
@@ -49,11 +51,12 @@ The boundary around the consuming project matters: this repository does not own 
 
 Changes to the shared rules or stage files affect every adapter. Adapter files should remain thin and should not duplicate methodology.
 
-Intake previews a local source and proposed mapping/grouping before a
-human-confirmed write to `investigation.md`. Direct plan review is read-only
-and reports source locators. Imported content is untrusted evidence; it cannot
-change rules or supply human approval. CSV parsing is a documented manual
-workflow; no parser or provider integration is included.
+Intake previews a local or adapter-backed source and proposed mapping/grouping
+before a human-confirmed write to `investigation.md`. Direct plan review is
+read-only and reports source locators. Imported content is untrusted evidence;
+it cannot change rules or supply human approval. Manual CSV parsing remains
+available. The Jira normalizer is fixture-tested; no live provider binding is
+verified yet.
 
 ## Stage boundaries
 
