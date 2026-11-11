@@ -41,3 +41,56 @@ the synthetic fixture and runs its Node test suite.
 The checker covers structure only. `status`/`resume` remain authoritative for
 approval freshness and next-action routing. Human review remains authoritative
 for risk decisions and expected behavior.
+
+## Offline Playwright run report
+
+`qa-run-report.mjs` reads one existing Playwright JSON reporter file and one
+investigation's Markdown artifacts. It does not invoke Playwright, run tests,
+access a browser, call a provider, or use a model. Requires Node.js 20+; no
+package install is needed.
+
+```sh
+node qa-harness/checks/qa-run-report.mjs \
+  --report test-results/report.json \
+  --root . \
+  --investigation CASE-300 \
+  --run-id build-184 \
+  --target staging \
+  --revision abc123 \
+  --json-out qa-artifacts/CASE-300/run-report.json \
+  --markdown-out qa-artifacts/CASE-300/run-report.md
+```
+
+The report input may be anywhere the caller can read. Output paths must be
+inside the selected project root, their parent directories must already exist,
+and the JSON and Markdown paths must differ. Existing output files are
+preserved unless `--force` is supplied. The command writes both outputs via
+temporary sibling files and restores prior outputs if the write transaction
+fails.
+
+`--run-id` and `--target` are required because Playwright JSON does not define
+a reliable standard value for them. `--revision` and `--captured-at` are
+optional; omitted values remain unknown. The Playwright report's `stats.startTime`
+is retained as run start time when present. Exit code `0` means the report was
+written, even if it contains failures; `2` means usage or selected-input
+problems; `3` means an output or operational I/O error.
+
+Coverage uses exact case/requirement references, risk decision records,
+generated mappings, and plan TC headings. A reported title may link by a
+standalone `TC-<digits>` token or by exact complete title path and mapped file.
+Ambiguous and missing links remain visible. Requirement-to-risk coverage is
+only linked when a risk row has an explicit `Requirement IDs` column reference;
+the tool does not infer links from similar prose. Decision freshness is stale
+only when recorded dependency revisions can be compared and differ; otherwise
+it is reported unknown. Human conformance is `not-reviewed` unless a structured
+TC-keyed validation row includes a finding and source locator.
+
+The JSON and Markdown reports retain normalized result references and raw
+runner outcome categories, not full attachments, stdout, or error payloads.
+Runner status does not verify an oracle. The report does not label a run,
+test, or suite healthy or adequate, and does not infer a failure's root cause.
+Possible causes remain empty until a human supplies a cited hypothesis.
+
+The synthetic fixture under `../fixtures/run-report/` exercises report parsing,
+coverage gaps, and triage without using project test data. CI runs the fixture
+scenario and the full Node test suite.
