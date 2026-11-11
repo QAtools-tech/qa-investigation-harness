@@ -13,6 +13,8 @@ No slash command here — user ask run stage, read `qa-harness/RULES.md` plus ma
 | User asks for | Read |
 |---|---|
 | "status" / "resume" / "continue QA" | `qa-harness/stages/00-status-and-resume.md` |
+| "intake" / "import case" / "import evidence" | `qa-harness/stages/intake.md` |
+| "review this plan/spec" | `qa-harness/stages/review-plan.md` |
 | "explore" / Stage 1 | `qa-harness/stages/01-explore.md` |
 | "model" / Stage 2 | `qa-harness/stages/02-model.md` |
 | "challenge" / Stage 3 | `qa-harness/stages/03-challenge.md` |

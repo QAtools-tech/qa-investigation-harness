@@ -40,6 +40,7 @@ investigation ID + case, spec, or run
 - **Generator-compatible output** — writes `specs/<id>.plan.md` in a plain plan structure a test-generation agent can consume.
 - **Post-generation auditing** — checks generated assertions against approved oracles and can mutation-check assertion strength.
 - **Read-only status and resume** — reports completed work, blockers, missing evidence, and one next action from artifacts on disk; resume follows the same resolver.
+- **Local source intake and plan review** — previews pasted, Markdown, and CSV evidence with locators and provenance, then writes only after human confirmation; reviews existing plans directly without editing them.
 
 ## How the workflow works
 
@@ -69,6 +70,8 @@ Each flow is identified by an existing ticket ID or a local investigation ID:
 | --- | --- | --- |
 | Status | Investigation ID and available artifacts | Read-only status report |
 | Resume | Investigation ID and evidence for the next eligible action | Existing stage output or a named blocker |
+| Intake | Pasted/local case, Markdown plan, or evidence excerpt | Preview; after confirmation, `qa-artifacts/<id>/investigation.md` |
+| Review plan | Existing plan/spec | Read-only findings with source locators |
 | Explore | Investigation ID, scoped case, confirmed non-production URL, interactive test account | `qa-artifacts/<id>/exploration.md` |
 | Model | Exploration artifact or qualifying imported observations | `qa-artifacts/<id>/flow-model.md` |
 | Challenge Part A | Flow model and cited observations | `qa-artifacts/<id>/risks.md` with `PROPOSED` rows |
@@ -85,6 +88,7 @@ The shared methodology lives in [`qa-harness/`](qa-harness/):
 
 - [`RULES.md`](qa-harness/RULES.md) is the source of truth for hard rules, safety boundaries, artifact paths, and stage order.
 - [`stages/`](qa-harness/stages/) contains the status/resume resolver and tool-agnostic stage instructions.
+- [`INTAKE.md`](qa-harness/INTAKE.md) defines provenance, safe excerpts, revisions, and CSV preview behavior; [`fixtures/`](qa-harness/fixtures/README.md) contains synthetic examples.
 - [`.github/prompts/`](.github/prompts/) provides GitHub Copilot prompt adapters.
 - [`.claude/skills/`](.claude/skills/) provides Claude Code skill adapters.
 - [`AGENTS.md`](AGENTS.md) provides Codex instructions.
@@ -167,7 +171,8 @@ The harness requires a non-production target URL and an interactive test account
 ├── qa-harness/
 │   ├── RULES.md                 # Shared rules and artifact contract
 │   ├── README.md                # Multi-tool usage guide
-│   └── stages/                  # Status/resume, explore, model, challenge, validate
+│   ├── stages/                  # Intake, plan review, status/resume, investigation stages
+│   └── fixtures/                # Synthetic CSV and plan intake examples
 ├── AGENTS.md                    # Codex repository instructions
 ├── CLAUDE.md                    # Claude Code repository instructions
 ├── CONTRIBUTING.md              # Contribution workflow

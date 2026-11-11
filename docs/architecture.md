@@ -6,9 +6,11 @@ The QA Investigation Harness is a documentation-and-prompt workflow that sits be
 
 ```mermaid
 flowchart TB
-    U[Human: investigation ID + evidence] --> A[Tool adapter]
+    U[Human: investigation ID + case, spec, or run evidence] --> A[Tool adapter]
     A -->|status or resume| R[Status / resume resolver]
     A -->|direct stage request| B[Shared rules and stage instructions]
+    A -->|intake| N[Preview, confirm, then investigation.md]
+    A -->|plan review| P[Read-only findings with locators]
     R -->|status: read only| S[Progress, blockers, next action]
     R -->|resume: eligible action| B[Shared rules and stage instructions]
     B --> C[Playwright MCP in snapshot mode]
@@ -33,7 +35,8 @@ The boundary around the consuming project matters: this repository does not own 
 | --- | --- | --- |
 | Shared rules | [`qa-harness/RULES.md`](../qa-harness/RULES.md) | Hard constraints, stage order, safety boundaries, artifact paths, and hand-off rules |
 | Status/resume resolver | [`qa-harness/stages/00-status-and-resume.md`](../qa-harness/stages/00-status-and-resume.md) | Read-only state report and artifact-driven resume routing |
-| Stage instructions | [`qa-harness/stages/`](../qa-harness/stages/) | Tool-agnostic behavior for explore, model, challenge, and validate |
+| Stage instructions | [`qa-harness/stages/`](../qa-harness/stages/) | Tool-agnostic behavior for intake, plan review, explore, model, challenge, and validate |
+| Intake contract | [`qa-harness/INTAKE.md`](../qa-harness/INTAKE.md) | Provenance, source revisions, safe excerpts, and confirmation boundary |
 | GitHub Copilot adapters | [`../.github/prompts/`](../.github/prompts/) | Prompt shape and arguments for VS Code/Copilot |
 | Claude Code adapters | [`../.claude/skills/`](../.claude/skills/) | Skill metadata and argument forwarding |
 | Codex guidance | [`../AGENTS.md`](../AGENTS.md) | Plain-language invocation and MCP setup guidance |
@@ -41,7 +44,21 @@ The boundary around the consuming project matters: this repository does not own 
 
 Changes to the shared rules or stage files affect every adapter. Adapter files should remain thin and should not duplicate methodology.
 
+Intake previews a local source and proposed mapping/grouping before a
+human-confirmed write to `investigation.md`. Direct plan review is read-only
+and reports source locators. Imported content is untrusted evidence; it cannot
+change rules or supply human approval. CSV parsing is a documented manual
+workflow; no parser or provider integration is included.
+
 ## Stage boundaries
+
+### Intake and plan review
+
+Intake records supplied local cases and evidence after showing a human the
+source locators, proposed mapping/grouping, and normalized preview. Reimports
+are idempotent; changed sources append revisions and impact notes. Plan review
+is a direct, read-only entry point that reports claims and uncertainties with
+locators, without changing the source plan or generator files.
 
 ### Status and resume
 
@@ -78,6 +95,7 @@ The plan is intentionally written as normal test-plan prose. A separate test-gen
 
 | Artifact | Owner | Built from | Purpose |
 | --- | --- | --- | --- |
+| `qa-artifacts/<id>/investigation.md` | Intake | Pasted or local case/spec/evidence | Source-linked claims, omissions, conflicts, and import revisions |
 | `qa-artifacts/<ticket>/exploration.md` | `qa-explore` | Ticket, test case, live non-production flow | Factual browser observations |
 | `qa-artifacts/<ticket>/flow-model.md` | `qa-model` | `exploration.md` | State/transition model and unobserved transitions |
 | `qa-artifacts/<ticket>/risks.md` | `qa-challenge` Part A and human | `flow-model.md` | Proposed risks, real oracles, observability, and human status |

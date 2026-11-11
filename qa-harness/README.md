@@ -21,8 +21,13 @@ generator to build from — plus an after-the-fact audit of what got generated.
 ## One source of truth, thin adapters
 
 Use the [investigation contract](CONTRACT.md) to choose a stage based on the
-evidence you already have. See the [public examples](examples.md) for a CSV
-case and a direct review of an existing spec and failed run.
+evidence you already have. See the [public examples](examples.md) and
+[synthetic intake fixtures](fixtures/README.md) for CSV intake and direct
+review examples.
+
+- **[INTAKE.md](INTAKE.md)** — local source, provenance, preview, and revision rules
+- **[stages/intake.md](stages/intake.md)** — preview/confirm/write workflow
+- **[stages/review-plan.md](stages/review-plan.md)** — direct read-only plan review
 
 Use `status <investigation-id>` for a read-only progress report or
 `resume <investigation-id>` to continue from the next eligible action. Both
@@ -32,8 +37,9 @@ human approval and generator handoff stops.
 
 - **[RULES.md](RULES.md)** — the hard rules every stage follows, regardless
   of tool
-- **[stages/](stages/)** — the shared status/resume resolver and four stages
-  (`00-status-and-resume.md`, `01-explore.md`,
+- **[stages/](stages/)** — shared status/resume resolver, intake and plan review,
+  and investigation stages (`00-status-and-resume.md`, `intake.md`,
+  `review-plan.md`, `01-explore.md`,
   `02-model.md`, `03-challenge.md`, `05-validate.md`), written as plain
   instructions any capable coding agent can read and follow directly
 
@@ -43,21 +49,22 @@ ever needs to change, it changes once, here — not once per tool.
 
 ## Pick your tool
 
-Each supported tool exposes status and resume while keeping the direct stage
-entry points available for focused reruns.
+Each supported tool exposes status/resume, intake, and plan review while
+keeping the investigation stages available for focused reruns.
 
 ### GitHub Copilot (VS Code)
 
-Use `.github/prompts/qa.prompt.md` for status or resume and the `qa-*.prompt.md`
-files for direct stages. These are thin adapters to the shared rules and stage
-files. The root [README.md](../README.md), `.github/copilot-instructions.md`,
+Use `.github/prompts/qa.prompt.md` for status or resume,
+`qa-intake.prompt.md` for intake, `qa-review-plan.prompt.md` for plan review,
+and the other `qa-*.prompt.md` files for direct stages. These are thin
+adapters to the shared rules and stage files. The root [README.md](../README.md), `.github/copilot-instructions.md`,
 and `.vscode/mcp.json` cover the setup.
 
 ### Claude Code
 
 - `CLAUDE.md` (repo root) points here automatically
 - `/qa status <id>` reports progress; `/qa resume <id>` continues from the next eligible action
-- Stages are skills: `/qa-explore`, `/qa-model`, `/qa-challenge`, `/qa-validate`
+- Stages are skills: `/qa-intake`, `/qa-review-plan`, `/qa-explore`, `/qa-model`, `/qa-challenge`, `/qa-validate`
 - Playwright MCP is registered in `.mcp.json` (repo root) — no setup needed
 
 Example:
