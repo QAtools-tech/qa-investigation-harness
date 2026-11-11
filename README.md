@@ -4,9 +4,9 @@
 
 ![QA Investigation Harness workflow preview](docs/assets/qa-investigation-harness-social.svg)
 
-The QA Investigation Harness turns a written test case into an evidence-backed hand-off for a separate Playwright test-generation agent. It walks the real browser flow, models the states and transitions that were observed, puts risks in front of a human for approval, and produces a plan that can be audited after generation.
+The QA Investigation Harness turns a local case, spec, or run into an evidence-backed hand-off for a separate Playwright test-generation agent. It walks the real browser flow when needed, models observed states and transitions, puts risks in front of a human for approval, and produces a plan that can be audited after generation.
 
-It is deliberately small and tool-agnostic: the methodology lives in one set of stage instructions, while GitHub Copilot, Claude Code, and Codex use thin adapters around it.
+It is deliberately small and tool-agnostic: the methodology lives in shared instructions, while GitHub Copilot, Claude Code, and Codex use thin adapters around it.
 
 ## Why it exists
 
@@ -15,9 +15,12 @@ Test generation is more useful when it starts from what the application actually
 The result is a traceable chain:
 
 ```text
-ticket + test case
+investigation ID + case, spec, or run
         │
         ▼
+  status / resume ──► the stage supported by available evidence
+                             │
+                             ▼
   browser exploration ──► state/transition model ──► proposed risks
                                                               │
                                                 human approves/rejects
@@ -34,40 +37,45 @@ ticket + test case
 - **Snapshot-based exploration** — records the live flow, accessibility-tree elements, URLs, visible changes, and evidence gaps.
 - **State and transition modeling** — separates observed transitions from plausible transitions that were not walked.
 - **Human-gated risk review** — generates proposed risks; only the human marks them approved or rejected.
-- **Generator-compatible output** — writes `specs/<ticket>.plan.md` in a plain plan structure a test-generation agent can consume.
+- **Generator-compatible output** — writes `specs/<id>.plan.md` in a plain plan structure a test-generation agent can consume.
 - **Post-generation auditing** — checks generated assertions against approved oracles and can mutation-check assertion strength.
+- **Read-only status and resume** — reports completed work, blockers, missing evidence, and one next action from artifacts on disk; resume follows the same resolver.
 
 ## How the workflow works
 
 ```mermaid
 flowchart LR
-    A[Ticket + existing test case] --> B[Stage 1: qa-explore]
-    B --> C[Stage 2: qa-model]
-    C --> D[Stage 3A: qa-challenge]
+    A[Investigation ID + case, spec, or run] --> R[Status / resume resolver]
+    R -->|status| S[Read-only progress report]
+    R -->|resume| B[Evidence-qualified next action]
+    B --> C[Observations and flow model]
+    C --> D[Proposed risks]
     D --> E{Human reviews risks.md}
-    E -->|Approve or reject rows| F[Stage 3B: write plan]
+    E -->|Fresh approval| F[Stage 3B: write plan]
     F --> G[External test-generation agent]
     G --> H[Stage 5: qa-validate]
     H --> I[validation.md]
 ```
 
-The human approval step is intentional. The harness never silently decides which risks matter, and it never writes Playwright test code or seed files.
+Ask for `status <investigation-id>` to inspect progress without changing files, or `resume <investigation-id>` to continue from the next eligible action. The human approval and generator handoff remain explicit stops. The harness never silently decides which risks matter, and it never writes Playwright test code or seed files.
 
 For the deeper artifact contract and boundaries, see [Architecture](docs/architecture.md).
 
 ## Stage outputs
 
-Each flow is identified by the ticket ID supplied by the human:
+Each flow is identified by an existing ticket ID or a local investigation ID:
 
 | Stage | Input | Output |
 | --- | --- | --- |
-| `qa-explore` | Ticket ID, test case, confirmed non-production URL, interactive test account | `qa-artifacts/<ticket>/exploration.md` |
-| `qa-model` | Exploration artifact | `qa-artifacts/<ticket>/flow-model.md` |
-| `qa-challenge` Part A | Exploration and flow model | `qa-artifacts/<ticket>/risks.md` with `PROPOSED` rows |
+| Status | Investigation ID and available artifacts | Read-only status report |
+| Resume | Investigation ID and evidence for the next eligible action | Existing stage output or a named blocker |
+| Explore | Investigation ID, scoped case, confirmed non-production URL, interactive test account | `qa-artifacts/<id>/exploration.md` |
+| Model | Exploration artifact or qualifying imported observations | `qa-artifacts/<id>/flow-model.md` |
+| Challenge Part A | Flow model and cited observations | `qa-artifacts/<id>/risks.md` with `PROPOSED` rows |
 | Human review | Risk table | `APPROVED` / `REJECTED` statuses entered by the human only |
-| `qa-challenge` Part B | Approved risks and intact source-date chain | `specs/<ticket>.plan.md` plus generated mapping in `risks.md` |
+| Challenge Part B | Fresh approved risks, dependencies, usable steps | `specs/<id>.plan.md` plus generated mapping in `risks.md` |
 | External generator | The plan file and the consuming project's test setup | Generated test files in that project |
-| `qa-validate` | Mapping, plan, and generated tests | `qa-artifacts/<ticket>/validation.md` |
+| Validate | Expected behavior plus test source or run evidence | `qa-artifacts/<id>/validation.md` |
 
 The `qa-artifacts/` and `specs/` directories are generated workflow output and are intentionally ignored by default. This repository documents and validates the process; it does not publish real investigation findings.
 
@@ -76,7 +84,7 @@ The `qa-artifacts/` and `specs/` directories are generated workflow output and a
 The shared methodology lives in [`qa-harness/`](qa-harness/):
 
 - [`RULES.md`](qa-harness/RULES.md) is the source of truth for hard rules, safety boundaries, artifact paths, and stage order.
-- [`stages/`](qa-harness/stages/) contains the tool-agnostic instructions for exploration, modeling, challenge, and validation.
+- [`stages/`](qa-harness/stages/) contains the status/resume resolver and tool-agnostic stage instructions.
 - [`.github/prompts/`](.github/prompts/) provides GitHub Copilot prompt adapters.
 - [`.claude/skills/`](.claude/skills/) provides Claude Code skill adapters.
 - [`AGENTS.md`](AGENTS.md) provides Codex instructions.
@@ -103,11 +111,11 @@ cd qa-investigation-harness
 
 #### GitHub Copilot in VS Code
 
-Open the repository in VS Code. The prompt adapters under `.github/prompts/` and the Playwright MCP configuration under `.vscode/mcp.json` provide the Copilot-facing setup.
+Open the repository in VS Code. Use `.github/prompts/qa.prompt.md` with action `status` or `resume` for progress and continuation. Other prompt adapters and `.vscode/mcp.json` provide direct stage access.
 
 #### Claude Code
 
-Open the repository with Claude Code. The root `.mcp.json` registers the Playwright MCP server, and the skills under `.claude/skills/` expose the four harness stages.
+Open the repository with Claude Code. `/qa status <id>` and `/qa resume <id>` inspect or continue an investigation; the `qa-*` skills keep direct stage access. The root `.mcp.json` registers Playwright MCP.
 
 #### Codex
 
@@ -117,19 +125,20 @@ Register Playwright MCP once in the global Codex configuration:
 codex mcp add playwright -- npx @playwright/mcp@latest --isolated --caps=core --snapshot-mode=full --timeout-action=30000 --timeout-navigation=30000 --timeout-settle=5000 --test-id-attribute=data-testid
 ```
 
-Then ask Codex to run a stage by name, supplying the ticket ID and test case where required. The full flow and safety rules are in [`AGENTS.md`](AGENTS.md).
+Then ask Codex for `status <investigation-id>` or `resume <investigation-id>`, or run a stage by name for a focused rerun. The full flow and safety rules are in [`AGENTS.md`](AGENTS.md).
 
 ### 3. Run the stages in order
 
-The stage names are the same across adapters:
+Use `status <investigation-id>` for a read-only progress report or `resume <investigation-id>` to continue from the next eligible action. The stage names are the same across adapters:
 
-1. `qa-explore` — provide an existing ticket ID and rough test case; confirm the target is non-production and provide credentials interactively.
-2. `qa-model` — build the state/transition model from the exploration artifact.
-3. `qa-challenge` — generate proposed risks, then stop for human review.
-4. Edit `qa-artifacts/<ticket>/risks.md` by hand and set rows to `APPROVED` or `REJECTED`.
-5. Run `qa-challenge` Part B to create the generator plan.
-6. Point the consuming project's test-generation agent at `specs/<ticket>.plan.md`.
-7. Run `qa-validate` after the generator has produced tests.
+1. Start from the available case, spec, or run evidence; status/resume selects the supported entry point.
+2. `qa-explore` — when observation is needed, provide a scoped case; confirm a non-production URL and provide credentials interactively.
+3. `qa-model` — build the state/transition model from observations.
+4. `qa-challenge` — propose risks, then stop for human review.
+5. The human records decisions in `qa-artifacts/<id>/risks.md`.
+6. Run `qa-challenge` Part B to create the generator plan.
+7. Point the consuming project's test-generation agent at `specs/<id>.plan.md`.
+8. Run `qa-validate` when generated test source or run evidence is available.
 
 ### Environment and credentials
 
@@ -149,8 +158,8 @@ The harness requires a non-production target URL and an interactive test account
 
 ```text
 .
-├── .claude/skills/              # Claude Code stage adapters
-├── .github/prompts/             # GitHub Copilot stage adapters
+├── .claude/skills/              # Claude Code status, resume, and stage adapters
+├── .github/prompts/             # GitHub Copilot status, resume, and stage adapters
 ├── .vscode/mcp.json             # VS Code Playwright MCP configuration
 ├── docs/
 │   ├── architecture.md          # Detailed workflow and artifact boundaries
@@ -158,7 +167,7 @@ The harness requires a non-production target URL and an interactive test account
 ├── qa-harness/
 │   ├── RULES.md                 # Shared rules and artifact contract
 │   ├── README.md                # Multi-tool usage guide
-│   └── stages/                  # Explore, model, challenge, validate
+│   └── stages/                  # Status/resume, explore, model, challenge, validate
 ├── AGENTS.md                    # Codex repository instructions
 ├── CLAUDE.md                    # Claude Code repository instructions
 ├── CONTRIBUTING.md              # Contribution workflow

@@ -4,11 +4,13 @@ Read qa-harness/RULES.md first if you have not already this session.
 
 Input: the ticket ID.
 
-This stage has two parts. Part B runs only after the human has edited
-risks.md — do not run it in the same turn as Part A unless the human
-explicitly asks you to skip the review pause (they shouldn't).
+This stage has two parts. After Part A, stop for human review. Part B
+requires human approval of the current risk and oracle. A request to
+continue does not supply approval.
 
-Read qa-artifacts/<ticket>/exploration.md and qa-artifacts/<ticket>/flow-model.md.
+Read qa-artifacts/<ticket>/flow-model.md and its source observations, whether
+in exploration.md or in imported evidence cited by the model. Use the
+investigation ID in place of `<ticket>` for a new investigation.
 Write no test code.
 
 --- PART A: risk table ---
@@ -57,8 +59,10 @@ Then stop and tell the human to review risks.md before running Part B.
 Run only when asked, and only after checking:
 1. risks.md contains rows with status APPROVED. If zero, stop and say the
    review is still pending.
-2. The Source date chain is intact: risks.md → flow-model.md →
-   exploration.md. If any link is stale, say which stage needs re-running.
+2. Check approval freshness and evidence dependencies using the
+   [investigation contract](../CONTRACT.md). For legacy investigations,
+   check the Source date chain: risks.md → flow-model.md → exploration.md.
+   If any required link is stale, report the affected risk and next action.
 
 This writes specs/<ticket>.plan.md — the SAME kind of artifact a planner
 agent would normally produce, in a plain documentation structure any
@@ -69,6 +73,13 @@ If specs/<ticket>.plan.md already exists:
 - Read it first. Never renumber or rewrite existing TC-<NN> entries.
 - Append new TC-<NN> entries for newly-approved risks, continuing the
   numbering from the highest existing TC number in the file.
+- Check existing mappings before appending. Follow the contract for a
+  reviewed revision that supersedes an existing entry.
+- If a plan entry appears to have been written before an interrupted mapping
+  write, do not duplicate it. Ask the human to identify and confirm the
+  matching TC entry; when confirmed and its content matches the approved risk
+  and oracle, append only the missing mapping. If a mapping points to a
+  missing TC entry or attribution is unclear, stop for human reconciliation.
 - If the file has no existing entries for this exact flow, start at TC-01.
 
 If your project already has an established plan-file format (check for
@@ -107,8 +118,12 @@ convention — check tests/ for the pattern before inventing one>`
     - expect: <...>
 ```
 
-One `TC-<NN>` block per APPROVED risk row, numbered sequentially. Steps come
-from exploration.md's verified path, not invented.
+For each current approved risk revision without a mapping, add one new
+`TC-<NN>` block unless the human has confirmed that an existing unmapped plan
+entry is the interrupted export for that risk. In that recovery case, verify
+the entry's content against the approved risk and oracle, then add only the
+missing mapping. Never duplicate or renumber an existing entry. Ground new
+steps in the verified path from the source observations.
 
 When a risk's Observable is "no" or "partial", still write a real `expect:`
 bullet stating the approved oracle as-is (do not weaken it), then add one
@@ -121,7 +136,8 @@ without pretending the browser-level check is sufficient.
 
 Then, in the SAME response, append a new section to the BOTTOM of
 qa-artifacts/<ticket>/risks.md — after the existing risk table, which must
-not otherwise be touched — recording the mapping just created:
+not otherwise be touched — recording mappings for new plan entries or
+human-confirmed recovery entries:
 
 ```markdown
 

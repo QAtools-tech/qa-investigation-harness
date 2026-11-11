@@ -6,7 +6,9 @@ Explore the flow described by a test case, using Playwright MCP.
 Write no test code and no analysis.
 
 You need two inputs from the human before starting, if not already given:
-- Ticket ID (e.g. PROJ-1234) — pre-existing, never invented by you
+- Investigation ID under the [investigation contract](../CONTRACT.md).
+  Use the existing ticket ID for legacy investigations. For new
+  investigations, use the local ID wherever this stage says `<ticket>`.
 - Test case — title + rough steps, however informal
 
 1. BASE_URL and TEST_ACCOUNT are not configured. Ask the human for both before

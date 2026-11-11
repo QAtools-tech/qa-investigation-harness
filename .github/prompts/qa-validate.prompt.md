@@ -1,57 +1,11 @@
 ---
-description: Stage 5 — check generated tests against approved oracles, then mutate
+description: Stage 5 — audit generated tests and mutate only on request
 agent: agent
 tools: ['playwright/*']
 ---
 
-Runs AFTER playwright-test-generator has produced spec files from
-specs/${input:ticketId}.plan.md. Do not author new tests.
+Read `qa-harness/RULES.md` and `qa-harness/CONTRACT.md`, then read and follow
+`qa-harness/stages/05-validate.md` exactly.
 
---- PART A: oracle conformance ---
-
-Read, in order:
-1. qa-artifacts/${input:ticketId}/risks.md — specifically its
-   "## Generated mapping" section(s) at the bottom, which list Risk ID → TC ID
-   → File. If no mapping section exists, stop and say Part B of qa-challenge
-   has not been run yet.
-2. specs/${input:ticketId}.plan.md — for each TC ID in the mapping, its
-   `**Steps:**` and `- expect:` bullets (including any GAP bullets).
-3. The generated spec file at the path the mapping names.
-
-For each row in the mapping, find the corresponding test in the spec file and
-record:
-
-| Risk ID | TC ID | Test found? | Assertion (quoted) | Implements the approved oracle from risks.md? |
-
-Flag any row where:
-- no test exists at the mapped file, or no test in it matches the TC ID/title
-- the assertion checks something weaker than the oracle in risks.md's Proposed
-  oracle column for that Risk ID
-- the assertion's only evidence is rendered text, where the oracle asked for more
-- the plan had a GAP bullet for this TC but the generated test does not
-  acknowledge it in any form (comment or otherwise)
-
-Write findings to qa-artifacts/${input:ticketId}/validation.md. Do not fix
-anything and do not edit the specs.
-
---- PART B: assertion mutation ---
-
-Run only when asked.
-
-Run the specs and report the raw output. No verdict.
-
-Then, for each test that passed:
-1. Mutate one expected value in its assertion to something wrong.
-2. Re-run that test alone.
-3. Restore the original value immediately.
-
-Mutation is a temporary edit for verification. Never leave a mutated value in
-place, and never commit one. Restore before moving to the next test.
-
-Append to validation.md, under "ASSERTION TOO WEAK", any test that still passed
-after mutation, with the Risk ID/TC ID and the mutation applied.
-
-Rules:
-- Do not fix weak assertions. Report them so the human decides whether to re-run
-  the generator or accept the gap.
-- Do not report the suite as healthy, adequate, or passing.
+Investigation ID: ${input:ticketId}
+Requested part: ${input:part}

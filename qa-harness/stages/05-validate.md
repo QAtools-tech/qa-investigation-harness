@@ -7,6 +7,11 @@ Input: the ticket ID.
 Runs AFTER your project's test-generation agent has produced spec files from
 specs/<ticket>.plan.md. Do not author new tests.
 
+For direct review of an existing plan, test, or run without a harness
+mapping, use the [investigation contract](../CONTRACT.md). Report only what
+the supplied evidence supports. The approved-risk audit below requires the
+human decisions and mapping.
+
 --- PART A: oracle conformance ---
 
 Read, in order:

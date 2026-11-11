@@ -6,8 +6,11 @@ The QA Investigation Harness is a documentation-and-prompt workflow that sits be
 
 ```mermaid
 flowchart TB
-    U[Human: ticket + test case] --> A[Tool adapter]
-    A --> B[Shared rules and stage instructions]
+    U[Human: investigation ID + evidence] --> A[Tool adapter]
+    A -->|status or resume| R[Status / resume resolver]
+    A -->|direct stage request| B[Shared rules and stage instructions]
+    R -->|status: read only| S[Progress, blockers, next action]
+    R -->|resume: eligible action| B[Shared rules and stage instructions]
     B --> C[Playwright MCP in snapshot mode]
     C --> D[exploration.md]
     D --> E[flow-model.md]
@@ -29,6 +32,7 @@ The boundary around the consuming project matters: this repository does not own 
 | Layer | Location | Responsibility |
 | --- | --- | --- |
 | Shared rules | [`qa-harness/RULES.md`](../qa-harness/RULES.md) | Hard constraints, stage order, safety boundaries, artifact paths, and hand-off rules |
+| Status/resume resolver | [`qa-harness/stages/00-status-and-resume.md`](../qa-harness/stages/00-status-and-resume.md) | Read-only state report and artifact-driven resume routing |
 | Stage instructions | [`qa-harness/stages/`](../qa-harness/stages/) | Tool-agnostic behavior for explore, model, challenge, and validate |
 | GitHub Copilot adapters | [`../.github/prompts/`](../.github/prompts/) | Prompt shape and arguments for VS Code/Copilot |
 | Claude Code adapters | [`../.claude/skills/`](../.claude/skills/) | Skill metadata and argument forwarding |
@@ -38,6 +42,15 @@ The boundary around the consuming project matters: this repository does not own 
 Changes to the shared rules or stage files affect every adapter. Adapter files should remain thin and should not duplicate methodology.
 
 ## Stage boundaries
+
+### Status and resume
+
+`status` reads the investigation artifacts and reports the current position,
+completed evidence, blockers, missing inputs, and one next action. It never
+writes or repairs files. `resume` uses the same resolver, then follows an
+existing stage file when prerequisites are satisfied. It stops at human risk
+review, before export with missing or stale approval, and at the external
+generator handoff. A plan alone does not prove that generated tests exist.
 
 ### Stage 1: explore
 

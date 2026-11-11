@@ -20,9 +20,20 @@ generator to build from — plus an after-the-fact audit of what got generated.
 
 ## One source of truth, thin adapters
 
+Use the [investigation contract](CONTRACT.md) to choose a stage based on the
+evidence you already have. See the [public examples](examples.md) for a CSV
+case and a direct review of an existing spec and failed run.
+
+Use `status <investigation-id>` for a read-only progress report or
+`resume <investigation-id>` to continue from the next eligible action. Both
+use [the shared resolver](stages/00-status-and-resume.md), which reads the
+artifacts on disk, names blockers and missing evidence, and preserves the
+human approval and generator handoff stops.
+
 - **[RULES.md](RULES.md)** — the hard rules every stage follows, regardless
   of tool
-- **[stages/](stages/)** — the four stages themselves (`01-explore.md`,
+- **[stages/](stages/)** — the shared status/resume resolver and four stages
+  (`00-status-and-resume.md`, `01-explore.md`,
   `02-model.md`, `03-challenge.md`, `05-validate.md`), written as plain
   instructions any capable coding agent can read and follow directly
 
@@ -32,16 +43,20 @@ ever needs to change, it changes once, here — not once per tool.
 
 ## Pick your tool
 
+Each supported tool exposes status and resume while keeping the direct stage
+entry points available for focused reruns.
+
 ### GitHub Copilot (VS Code)
 
-Already set up — see the root [README.md](../README.md), `.github/copilot-instructions.md`,
-`.github/prompts/qa-*.prompt.md`, and `.vscode/mcp.json`. That version predates
-this multi-tool layer and is self-contained; you don't need anything in this
-folder to use it.
+Use `.github/prompts/qa.prompt.md` for status or resume and the `qa-*.prompt.md`
+files for direct stages. These are thin adapters to the shared rules and stage
+files. The root [README.md](../README.md), `.github/copilot-instructions.md`,
+and `.vscode/mcp.json` cover the setup.
 
 ### Claude Code
 
 - `CLAUDE.md` (repo root) points here automatically
+- `/qa status <id>` reports progress; `/qa resume <id>` continues from the next eligible action
 - Stages are skills: `/qa-explore`, `/qa-model`, `/qa-challenge`, `/qa-validate`
 - Playwright MCP is registered in `.mcp.json` (repo root) — no setup needed
 
@@ -61,9 +76,8 @@ with `npx playwright init-agents --loop=claude`, then point it at
 ### Codex
 
 - `AGENTS.md` (repo root) is read automatically and explains how to run a
-  stage — there's no slash command; just ask in plain language, e.g. "run the
-  qa-explore stage for PROJ-1234: verify user can filter the task list by
-  status"
+  stage or status/resume action — there's no slash command; ask in plain
+  language, e.g. "status PROJ-1234" or "resume PROJ-1234"
 - Playwright MCP needs a one-time setup command — see `AGENTS.md` for the
   exact `codex mcp add` invocation
 
