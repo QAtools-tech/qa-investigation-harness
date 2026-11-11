@@ -12,5 +12,7 @@ the source of truth; do not duplicate their rules here.
   preview mapping and grouping and wait for human confirmation before writing.
 - For review of an existing plan, use `qa-harness/stages/review-plan.md`;
   report findings without editing source or generator-facing files.
+- For risk and validation review, use the scoped agents in `.github/agents/`;
+  they have read/search tools only. Parent workflow reconciles cited findings.
 - Never author Playwright tests or seed files. The consuming project's
   generator owns them.

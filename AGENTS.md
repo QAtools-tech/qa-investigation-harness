@@ -20,6 +20,14 @@ No slash command here — user ask run stage, read `qa-harness/RULES.md` plus ma
 | "challenge" / Stage 3 | `qa-harness/stages/03-challenge.md` |
 | "validate" / Stage 5 | `qa-harness/stages/05-validate.md` |
 
+Codex project skills in `.agents/skills/` provide `$qa-intake`,
+`$qa-review-plan`, `$qa-status-resume`, `$qa-explore`, `$qa-model`,
+`$qa-challenge`, `$qa-validate`, `$qa-risk-review`, and
+`$qa-validation-review` shortcuts. They forward to the same canonical
+instructions above. Reviewer skills are instructions, not enforced read-only
+tool allowlists; inspect host permissions. Plain-language requests remain
+supported when skills are unavailable.
+
 Stage 4 — gen tests — not part harness. Point project's test-gen agent at `specs/<ticket>.plan.md` file Stage 3 makes.
 
 For read-only progress report, ask "status <investigation-id>". To continue next eligible action, ask "resume <investigation-id>". Read `qa-harness/RULES.md` and `qa-harness/stages/00-status-and-resume.md` first. Status never write; resume follow shared resolver, stop at human approval and generator handoff boundary.

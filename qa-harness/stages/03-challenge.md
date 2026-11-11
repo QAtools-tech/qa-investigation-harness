@@ -13,6 +13,13 @@ in exploration.md or in imported evidence cited by the model. Use the
 investigation ID in place of `<ticket>` for a new investigation.
 Write no test code.
 
+If a focused read-only risk reviewer is available, the parent may give it only
+the flow model, cited source observations/intake record, and existing risk
+table, following [`risk-reviewer.md`](risk-reviewer.md). The parent must
+reconcile every candidate against those sources before writing. If the client
+cannot enforce the reviewer’s read-only tools, use the shared instructions
+directly in the parent workflow.
+
 --- PART A: risk table ---
 
 For each state, each transition (especially unobserved ones), each item under

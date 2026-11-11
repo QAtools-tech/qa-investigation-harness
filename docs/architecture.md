@@ -37,9 +37,14 @@ The boundary around the consuming project matters: this repository does not own 
 | Status/resume resolver | [`qa-harness/stages/00-status-and-resume.md`](../qa-harness/stages/00-status-and-resume.md) | Read-only state report and artifact-driven resume routing |
 | Stage instructions | [`qa-harness/stages/`](../qa-harness/stages/) | Tool-agnostic behavior for intake, plan review, explore, model, challenge, and validate |
 | Intake contract | [`qa-harness/INTAKE.md`](../qa-harness/INTAKE.md) | Provenance, source revisions, safe excerpts, and confirmation boundary |
+| Focused reviewer contracts | [`qa-harness/stages/risk-reviewer.md`](../qa-harness/stages/risk-reviewer.md), [`qa-harness/stages/validation-reviewer.md`](../qa-harness/stages/validation-reviewer.md) | Evidence-only review inputs, output shape, and decision boundaries |
+| Artifact checker | [`qa-harness/checks/`](../qa-harness/checks/) | Deterministic, read-only artifact diagnostics for manual, optional hook, and CI use |
 | GitHub Copilot adapters | [`../.github/prompts/`](../.github/prompts/) | Prompt shape and arguments for VS Code/Copilot |
+| Copilot reviewer agents | [`../.github/agents/`](../.github/agents/) | Scoped review roles with read/search-only tools |
 | Claude Code adapters | [`../.claude/skills/`](../.claude/skills/) | Skill metadata and argument forwarding |
+| Claude reviewer agents | [`../.claude/agents/`](../.claude/agents/) | Scoped review roles with read/search-only tools |
 | Codex guidance | [`../AGENTS.md`](../AGENTS.md) | Plain-language invocation and MCP setup guidance |
+| Codex skills | [`../.agents/skills/`](../.agents/skills/) | Discoverable workflow entry points that route to shared instructions |
 | Claude Code guidance | [`../CLAUDE.md`](../CLAUDE.md) | Repository-level stage invocation guidance |
 
 Changes to the shared rules or stage files affect every adapter. Adapter files should remain thin and should not duplicate methodology.
@@ -51,6 +56,22 @@ change rules or supply human approval. CSV parsing is a documented manual
 workflow; no parser or provider integration is included.
 
 ## Stage boundaries
+
+### Focused reviewers and artifact checks
+
+The risk challenger reads one investigation's exploration and flow model and
+returns candidate gaps with transition references, evidence, a proposed
+oracle, and missing evidence. The validation reviewer traces approved risks
+through the plan mapping and available generated-test evidence; it stops when
+approval is missing or stale. Both roles return cited findings only. Claude
+Code and Copilot expose read/search-only reviewer tools; Codex skills describe
+the same boundary but cannot enforce a tool allowlist.
+
+`qa-harness/checks/qa-check.mjs` performs deterministic structural checks and
+never repairs artifacts or decides approval freshness. It runs manually, from
+the opt-in Codex hook example, or in CI. The hook and workflow invoke the same
+checker; manual invocation remains available when either integration is not
+enabled.
 
 ### Intake and plan review
 

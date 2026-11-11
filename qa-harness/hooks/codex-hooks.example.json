@@ -1,0 +1,18 @@
+{
+  "description": "Optional post-edit QA artifact diagnostics. Copy into .codex/hooks.json to enable.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node qa-harness/checks/qa-check-hook.mjs",
+            "statusMessage": "Checking QA artifacts",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -23,6 +23,14 @@ Read, in order:
    `expect:` bullets (including any GAP bullets).
 3. The generated spec file at the path the mapping names.
 
+If a focused read-only validation reviewer is available, the parent may give
+it only the current decisions, mapping, plan, and user-identified mapped test
+source, following [`validation-reviewer.md`](validation-reviewer.md). Stop
+affected conformance judgments first when approval is missing/stale or a
+mapping is unresolved. The parent reconciles findings and writes the artifact;
+the reviewer never edits files or decides approval. If the client cannot
+enforce read-only tools, use the shared instructions directly in the parent.
+
 For each row in the mapping, find the corresponding test in the spec file and
 record:
 

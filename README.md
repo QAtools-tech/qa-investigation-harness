@@ -41,6 +41,7 @@ investigation ID + case, spec, or run
 - **Post-generation auditing** — checks generated assertions against approved oracles and can mutation-check assertion strength.
 - **Read-only status and resume** — reports completed work, blockers, missing evidence, and one next action from artifacts on disk; resume follows the same resolver.
 - **Local source intake and plan review** — previews pasted, Markdown, and CSV evidence with locators and provenance, then writes only after human confirmation; reviews existing plans directly without editing them.
+- **Focused review and deterministic checks** — bounded risk/validation reviewers return cited findings; an optional read-only artifact checker runs manually, through an opt-in Codex hook, or in CI.
 
 ## How the workflow works
 
@@ -89,6 +90,9 @@ The shared methodology lives in [`qa-harness/`](qa-harness/):
 - [`RULES.md`](qa-harness/RULES.md) is the source of truth for hard rules, safety boundaries, artifact paths, and stage order.
 - [`stages/`](qa-harness/stages/) contains the status/resume resolver and tool-agnostic stage instructions.
 - [`INTAKE.md`](qa-harness/INTAKE.md) defines provenance, safe excerpts, revisions, and CSV preview behavior; [`fixtures/`](qa-harness/fixtures/README.md) contains synthetic examples.
+- [`checks/README.md`](qa-harness/checks/README.md) documents the deterministic checker, opt-in hook, and CI behavior.
+- [`.agents/skills/`](.agents/skills/) provides Codex stage and review shortcuts; Codex skills do not enforce reviewer tool restrictions.
+- [`.claude/agents/`](.claude/agents/) and [`.github/agents/`](.github/agents/) provide read/search-only focused reviewers.
 - [`.github/prompts/`](.github/prompts/) provides GitHub Copilot prompt adapters.
 - [`.claude/skills/`](.claude/skills/) provides Claude Code skill adapters.
 - [`AGENTS.md`](AGENTS.md) provides Codex instructions.
@@ -102,7 +106,7 @@ Playwright MCP configuration is kept per tool:
 
 ## Getting started
 
-This repository has no application runtime, package manifest, dependency install, Docker image, database, or built-in test suite. There is nothing to build before reading or adapting the harness.
+This repository has no application runtime, package manifest, dependency install, Docker image, or database. The optional artifact checker and its tests use Node.js built-ins only; no package install is required.
 
 ### 1. Clone the repository
 
@@ -115,11 +119,11 @@ cd qa-investigation-harness
 
 #### GitHub Copilot in VS Code
 
-Open the repository in VS Code. Use `.github/prompts/qa.prompt.md` with action `status` or `resume` for progress and continuation. Other prompt adapters and `.vscode/mcp.json` provide direct stage access.
+Open the repository in VS Code. Use `.github/prompts/qa.prompt.md` with action `status` or `resume` for progress and continuation. Other prompt adapters provide direct stage access; `.github/agents/` contains read/search-only reviewers. Run the optional artifact checker manually; this repo does not auto-enable a Copilot hook.
 
 #### Claude Code
 
-Open the repository with Claude Code. `/qa status <id>` and `/qa resume <id>` inspect or continue an investigation; the `qa-*` skills keep direct stage access. The root `.mcp.json` registers Playwright MCP.
+Open the repository with Claude Code. `/qa status <id>` and `/qa resume <id>` inspect or continue an investigation; the `qa-*` skills keep direct stage access. The `qa-risk-challenger` and `qa-validation-reviewer` agents have read-only file/search tools. The root `.mcp.json` registers Playwright MCP.
 
 #### Codex
 
@@ -129,7 +133,9 @@ Register Playwright MCP once in the global Codex configuration:
 codex mcp add playwright -- npx @playwright/mcp@latest --isolated --caps=core --snapshot-mode=full --timeout-action=30000 --timeout-navigation=30000 --timeout-settle=5000 --test-id-attribute=data-testid
 ```
 
-Then ask Codex for `status <investigation-id>` or `resume <investigation-id>`, or run a stage by name for a focused rerun. The full flow and safety rules are in [`AGENTS.md`](AGENTS.md).
+Then use the `$qa-*` skills for intake, status/resume, or a direct stage, or ask in plain language. `$qa-risk-review` and `$qa-validation-review` are read-only by instruction but do not enforce a tool allowlist. The optional checker command is in [`qa-harness/checks/README.md`](qa-harness/checks/README.md). The full flow and safety rules are in [`AGENTS.md`](AGENTS.md).
+
+The checker requires Node.js 20 or newer and has no package dependencies. Run it manually with `node qa-harness/checks/qa-check.mjs`; `qa-harness/checks/README.md` documents supported files, the opt-in Codex hook, and CI.
 
 ### 3. Run the stages in order
 
@@ -162,7 +168,10 @@ The harness requires a non-production target URL and an interactive test account
 
 ```text
 .
+├── .agents/skills/              # Codex status, resume, stage, and review shortcuts
+├── .claude/agents/              # Read/search-only Claude reviewers
 ├── .claude/skills/              # Claude Code status, resume, and stage adapters
+├── .github/agents/              # Read/search-only Copilot reviewers
 ├── .github/prompts/             # GitHub Copilot status, resume, and stage adapters
 ├── .vscode/mcp.json             # VS Code Playwright MCP configuration
 ├── docs/

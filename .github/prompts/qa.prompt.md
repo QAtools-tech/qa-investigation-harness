@@ -1,7 +1,6 @@
 ---
 description: Inspect QA investigation status or resume its next eligible action
 agent: agent
-tools: ['playwright/*']
 ---
 
 Read `qa-harness/RULES.md`, `qa-harness/CONTRACT.md`, and
