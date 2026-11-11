@@ -4,7 +4,9 @@ Read qa-harness/RULES.md first if you have not already this session.
 
 Input: the ticket ID.
 
-Read qa-artifacts/<ticket>/exploration.md. Write no test code and no risks.
+Read qa-artifacts/<ticket>/exploration.md or use imported observations that
+meet the [investigation contract](../CONTRACT.md). Cite their source and
+location in the model. Write no test code and no risks.
 
 Build a model of the flow from the observations only.
 

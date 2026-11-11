@@ -1,5 +1,10 @@
 # QA Investigation Harness
 
+For direct entry from a local case, spec, or run, read
+[the shared investigation contract](../qa-harness/CONTRACT.md) and follow
+its prerequisites. The ticket workflow below is the legacy path. Shared
+approval and freshness requirements also apply to plan export.
+
 An investigation layer that runs BEFORE test generation, and a conformance check
 that runs after. It takes a written test case tied to an existing ticket ID,
 investigates the real flow, and produces a test plan for the

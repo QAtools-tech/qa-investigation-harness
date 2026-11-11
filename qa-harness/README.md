@@ -20,6 +20,10 @@ generator to build from — plus an after-the-fact audit of what got generated.
 
 ## One source of truth, thin adapters
 
+Use the [investigation contract](CONTRACT.md) to choose a stage based on the
+evidence you already have. See the [public examples](examples.md) for a CSV
+case and a direct review of an existing spec and failed run.
+
 - **[RULES.md](RULES.md)** — the hard rules every stage follows, regardless
   of tool
 - **[stages/](stages/)** — the four stages themselves (`01-explore.md`,

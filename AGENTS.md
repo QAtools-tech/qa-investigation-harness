@@ -1,5 +1,8 @@
 # QA Investigation Harness
 
+Use [the investigation contract](qa-harness/CONTRACT.md) to select an entry
+point for an existing ticket, local case, spec, or run.
+
 This repo has a risk-driven QA investigation harness. Full rules live in
 `qa-harness/RULES.md` — read it in full before running any stage below, and
 follow it exactly. Read the relevant stage file under `qa-harness/stages/`

@@ -76,8 +76,10 @@ should be given.
 2. NEVER set a risk row to APPROVED or REJECTED. Only the human does that.
 3. NEVER write to specs/<ticket>.plan.md unless risks.md contains rows with
    status APPROVED. If none, say the human review step is still pending.
-4. NEVER skip ahead. If asked for a later stage before earlier artifacts
-   exist, say which are missing and stop.
+4. Check the prerequisites in [the investigation contract](CONTRACT.md).
+   For an existing ticket workflow, use the stage's original artifact chain.
+   For direct entry, use equivalent evidence where the contract permits it.
+   If required evidence is missing, name it and stop that action.
 5. NEVER report a test as passing, healthy, or adequate. Report raw output.
    The human decides.
 6. One flow per session. If asked about a second flow, state that the session
