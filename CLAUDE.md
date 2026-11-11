@@ -1,25 +1,30 @@
 # QA Investigation Harness
 
-This repo has a risk-driven QA investigation harness. Full rules live in
-[qa-harness/RULES.md](qa-harness/RULES.md) — read it before running any stage
-below, and follow it exactly.
+Repo has risk-driven QA investigation harness. Full rules in
+[qa-harness/RULES.md](qa-harness/RULES.md) — read before running any stage
+below, follow exactly.
 
-Never write Playwright test code yourself. Test generation belongs to this
-project's test-generation agent (see qa-harness/RULES.md for how to get one
-if it doesn't exist yet) — this harness only investigates, produces a
-human-reviewed test plan, and audits the result.
+Use `/qa status <investigation-id>` for read-only progress report, or
+`/qa resume <investigation-id>` to continue from next eligible action.
+Both use `qa-harness/stages/00-status-and-resume.md`; status never writes,
+resume preserves human approval + generator handoff stops.
 
-## Stages
+Never write Playwright test code yourself. Test generation belongs to
+project's test-generation agent (see qa-harness/RULES.md to get one
+if none exists) — harness only investigates, produces
+human-reviewed test plan, audits result.
 
-Invoke these as skills, in order:
+## Direct stages
 
-- `/qa-explore` — walk a flow, record observations (Stage 1)
-- `/qa-model` — build a state/transition model (Stage 2)
-- `/qa-challenge` — risk table, then (after human approval) a test plan (Stage 3)
+Invoke as skills, in order:
+
+- `/qa-explore` — walk flow, record observations (Stage 1)
+- `/qa-model` — build state/transition model (Stage 2)
+- `/qa-challenge` — risk table, then (after human approval) test plan (Stage 3)
 - `/qa-validate` — audit generated tests against approved risks (Stage 5)
 
-Stage 4 — actually generating tests — is not a skill here. Point your
-project's test-generation agent at the `specs/<ticket>.plan.md` file Stage 3
-produces, the same way you'd hand it any other plan.
+Stage 4 — generating tests — not a skill here. Point
+project's test-generation agent at `specs/<ticket>.plan.md` file Stage 3
+produces, same as handing it any other plan.
 
-See [qa-harness/README.md](qa-harness/README.md) for the full walkthrough.
+See [qa-harness/README.md](qa-harness/README.md) for full walkthrough.

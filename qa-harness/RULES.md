@@ -5,15 +5,21 @@ Code, Codex, ...) points here instead of duplicating these rules. If you are
 an agent following a stage file, read this once per session before acting on
 any stage.
 
-An investigation layer that runs BEFORE test generation, and a conformance
-check that runs after. It takes a written test case tied to an existing
-ticket ID, investigates the real flow, and produces a test plan in the same
-format and location your project's test-generation agent already expects.
+An investigation layer that runs before test generation, and a conformance
+check that runs after. Start with one investigation ID and the case, spec, or
+run evidence available, as defined in `CONTRACT.md`. Existing ticket IDs keep
+their legacy artifact paths; new investigations use a local ID.
 
 ## Stage order
 
-Input: a ticket ID (e.g. PROJ-1234) for a test case that already exists in
-the test management system, plus the test case itself, supplied by the human.
+Before running or resuming a stage, use
+[`stages/00-status-and-resume.md`](stages/00-status-and-resume.md) to resolve
+the investigation state from disk. `status` is read-only. `resume` follows the
+same state rules and delegates stage behavior to the existing stage files.
+
+For the existing ticket workflow, the input is a pre-existing ticket ID
+(e.g. PROJ-1234) and its test case, supplied by the human. For direct entry,
+use the evidence and minimum prerequisites in `CONTRACT.md`.
 
 1. explore    — walk the live flow the test case describes, and identify any
                  existing seed file whose starting state matches it
@@ -95,6 +101,9 @@ should be given.
    downgrade it to what happens to be testable today.
 10. NEVER rewrite or renumber existing TC-<NN> entries in an existing
     specs/<ticket>.plan.md. Only append new ones.
+11. Status must never write or repair artifacts, decide risks, export a plan,
+    validate tests, or run tests. Resume must preserve all existing approval,
+    freshness, generator-handoff, and one-flow boundaries.
 
 ## Artifact paths
 

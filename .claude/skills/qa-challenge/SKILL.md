@@ -1,18 +1,14 @@
 ---
 name: qa-challenge
-description: Stage 3 of the QA investigation harness — produce a risk table (Part A), then after human approval a test plan (Part B). Invoke manually, do not trigger automatically.
-argument-hint: <ticket-id> [run Part B]
+description: Stage 3 of the QA investigation harness. Propose risks or export only after human approval.
+argument-hint: <investigation-id> [run Part B]
 arguments: [ticketId, part]
 disable-model-invocation: true
 ---
 
-Read qa-harness/RULES.md and qa-harness/stages/03-challenge.md, then follow
-the challenge stage exactly.
+Read `qa-harness/RULES.md` and `qa-harness/CONTRACT.md`, then read and follow
+`qa-harness/stages/03-challenge.md` exactly.
 
-Ticket: $ticketId
-
-If the argument "run Part B" was given below, run Part B — after first
-checking risks.md actually has APPROVED rows, per the stage file. Otherwise
-run Part A only, and stop for human review as the stage file instructs.
-
-$ARGUMENTS
+Investigation ID: $ticketId
+Requested part: $part
+Arguments: $ARGUMENTS

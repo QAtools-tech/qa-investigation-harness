@@ -75,6 +75,11 @@ If specs/<ticket>.plan.md already exists:
   numbering from the highest existing TC number in the file.
 - Check existing mappings before appending. Follow the contract for a
   reviewed revision that supersedes an existing entry.
+- If a plan entry appears to have been written before an interrupted mapping
+  write, do not duplicate it. Ask the human to identify and confirm the
+  matching TC entry; when confirmed and its content matches the approved risk
+  and oracle, append only the missing mapping. If a mapping points to a
+  missing TC entry or attribution is unclear, stop for human reconciliation.
 - If the file has no existing entries for this exact flow, start at TC-01.
 
 If your project already has an established plan-file format (check for
@@ -113,9 +118,12 @@ convention — check tests/ for the pattern before inventing one>`
     - expect: <...>
 ```
 
-One new `TC-<NN>` block per current approved risk revision without a mapping,
-numbered sequentially. Ground steps in the verified path from the source
-observations.
+For each current approved risk revision without a mapping, add one new
+`TC-<NN>` block unless the human has confirmed that an existing unmapped plan
+entry is the interrupted export for that risk. In that recovery case, verify
+the entry's content against the approved risk and oracle, then add only the
+missing mapping. Never duplicate or renumber an existing entry. Ground new
+steps in the verified path from the source observations.
 
 When a risk's Observable is "no" or "partial", still write a real `expect:`
 bullet stating the approved oracle as-is (do not weaken it), then add one
@@ -128,7 +136,8 @@ without pretending the browser-level check is sufficient.
 
 Then, in the SAME response, append a new section to the BOTTOM of
 qa-artifacts/<ticket>/risks.md — after the existing risk table, which must
-not otherwise be touched — recording the mapping just created:
+not otherwise be touched — recording mappings for new plan entries or
+human-confirmed recovery entries:
 
 ```markdown
 
