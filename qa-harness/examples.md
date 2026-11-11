@@ -1,6 +1,8 @@
 # Public examples
 
 These synthetic walkthroughs demonstrate the [investigation contract](CONTRACT.md).
+For reproducible first-run instructions, use [CSV case to an approved handoff](walkthroughs/csv-case-to-approved-handoff.md)
+and [existing spec plus failed run](walkthroughs/spec-and-failed-run.md).
 
 ## CSV case to approved handoff
 

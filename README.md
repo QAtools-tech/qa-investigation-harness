@@ -6,7 +6,7 @@
 
 The QA Investigation Harness turns a local case, spec, or run into an evidence-backed hand-off for a separate Playwright test-generation agent. It walks the real browser flow when needed, models observed states and transitions, puts risks in front of a human for approval, and produces a plan that can be audited after generation.
 
-It is deliberately small and tool-agnostic: the methodology lives in shared instructions, while GitHub Copilot, Claude Code, and Codex use thin adapters around it.
+It is deliberately small and tool-agnostic: the methodology lives in shared instructions. Claude Code and Codex have native workflow skills; VS Code Local has prompt adapters. The current Copilot harness does not load those prompt files yet. See the [compatibility matrix](docs/compatibility.md) for tested limits.
 
 ## Why it exists
 
@@ -95,7 +95,7 @@ The shared methodology lives in [`qa-harness/`](qa-harness/):
 - [`adapters/README.md`](qa-harness/adapters/README.md) documents the normalized source record contract, Jira pilot, and unverified live client bindings.
 - [`.agents/skills/`](.agents/skills/) provides Codex stage and review shortcuts; Codex skills do not enforce reviewer tool restrictions.
 - [`.claude/agents/`](.claude/agents/) and [`.github/agents/`](.github/agents/) provide read/search-only focused reviewers.
-- [`.github/prompts/`](.github/prompts/) provides GitHub Copilot prompt adapters.
+- [`.github/prompts/`](.github/prompts/) provides VS Code Local prompt adapters; the current Copilot harness requires a skill conversion not yet included here.
 - [`.claude/skills/`](.claude/skills/) provides Claude Code skill adapters.
 - [`AGENTS.md`](AGENTS.md) provides Codex instructions.
 - [`CLAUDE.md`](CLAUDE.md) provides Claude Code repository instructions.
@@ -103,12 +103,22 @@ The shared methodology lives in [`qa-harness/`](qa-harness/):
 Playwright MCP configuration is kept per tool:
 
 - [`.mcp.json`](.mcp.json) is the repository-level MCP configuration used by Claude Code.
-- [`.vscode/mcp.json`](.vscode/mcp.json) is the VS Code configuration used by the Copilot setup.
+- [`.vscode/mcp.json`](.vscode/mcp.json) is the VS Code configuration used by the Local setup.
 - Codex users can register the server once with the command shown below.
 
 ## Getting started
 
 This repository has no application runtime, package manifest, dependency install, Docker image, or database. The optional artifact checker and its tests use Node.js built-ins only; no package install is required.
+
+### Choose where to start
+
+- **A local case or CSV:** begin with Intake. Follow the [CSV approval-boundary walkthrough](qa-harness/walkthroughs/csv-case-to-approved-handoff.md).
+- **An existing plan or spec:** use direct plan review; do not force it through browser exploration.
+- **A failed run:** begin with triage. Follow the [spec-and-run walkthrough](qa-harness/walkthroughs/spec-and-failed-run.md).
+- **Existing investigation artifacts:** ask for `status <id>` or `resume <id>`; resume stops at human approval and generator handoff boundaries.
+
+See [compatibility](docs/compatibility.md) before selecting a client and
+[migration guidance](docs/migration.md) before moving legacy artifacts.
 
 ### 1. Clone the repository
 
@@ -119,9 +129,13 @@ cd qa-investigation-harness
 
 ### 2. Choose an adapter
 
-#### GitHub Copilot in VS Code
+#### VS Code Local harness
 
-Open the repository in VS Code. Use `.github/prompts/qa.prompt.md` with action `status` or `resume` for progress and continuation. Other prompt adapters provide direct stage access; `.github/agents/` contains read/search-only reviewers. Run the optional artifact checker manually; this repo does not auto-enable a Copilot hook.
+The `.github/prompts/qa-*.prompt.md` adapters run in VS Code's Local harness.
+The Local harness is scheduled for removal in February 2027. VS Code's current
+Copilot harness does not load these prompt files; use the manual shared-rule
+path there, or follow the [migration guide](docs/migration.md). The repository
+has not verified the current Copilot-harness workflow end to end.
 
 #### Claude Code
 
@@ -139,18 +153,19 @@ Then use the `$qa-*` skills for intake, status/resume, or a direct stage, or ask
 
 The checker requires Node.js 20 or newer and has no package dependencies. Run it manually with `node qa-harness/checks/qa-check.mjs`; `qa-harness/checks/README.md` documents supported files, the opt-in Codex hook, and CI.
 
-### 3. Run the stages in order
+### 3. Continue from the evidence you have
 
-Use `status <investigation-id>` for a read-only progress report or `resume <investigation-id>` to continue from the next eligible action. The stage names are the same across adapters:
-
-1. Start from the available case, spec, or run evidence; status/resume selects the supported entry point.
-2. `qa-explore` — when observation is needed, provide a scoped case; confirm a non-production URL and provide credentials interactively.
-3. `qa-model` — build the state/transition model from observations.
-4. `qa-challenge` — propose risks, then stop for human review.
-5. The human records decisions in `qa-artifacts/<id>/risks.md`.
-6. Run `qa-challenge` Part B to create the generator plan.
-7. Point the consuming project's test-generation agent at `specs/<id>.plan.md`.
-8. Run `qa-validate` when generated test source or run evidence is available.
+- Existing investigation files: `status <id>` reports progress without
+  writing; `resume <id>` follows the next eligible action and stops at human
+  review or generator handoff.
+- Local case needing observation: intake previews and waits for confirmation;
+  explore only after a scoped non-production URL and interactive access are
+  available, then model and challenge the recorded evidence.
+- Existing plan/spec: use direct plan review. Failure evidence: use triage.
+  Do not force either path through browser exploration.
+- After Challenge Part A, a human records decisions. Part B can export only
+  current approved risks. The consuming project's generator remains separate;
+  validate after its test source or run evidence is supplied.
 
 ### Environment and credentials
 
@@ -174,7 +189,7 @@ The harness requires a non-production target URL and an interactive test account
 ├── .claude/agents/              # Read/search-only Claude reviewers
 ├── .claude/skills/              # Claude Code status, resume, and stage adapters
 ├── .github/agents/              # Read/search-only Copilot reviewers
-├── .github/prompts/             # GitHub Copilot status, resume, and stage adapters
+├── .github/prompts/             # VS Code Local prompt adapters
 ├── .vscode/mcp.json             # VS Code Playwright MCP configuration
 ├── docs/
 │   ├── architecture.md          # Detailed workflow and artifact boundaries

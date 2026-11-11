@@ -14,7 +14,7 @@ Write to qa-artifacts/<ticket>/flow-model.md:
 
 ```markdown
 # Flow model: <flow name>
-Source: exploration.md (<date from that file>)
+Source: <exploration.md or imported observation source(s), with locators>
 Modelled: <ISO date>
 
 ## States
@@ -34,11 +34,12 @@ Modelled: <ISO date>
 ```
 
 Rules:
-- Mark a transition "Observed: yes" only if exploration.md actually recorded
-  it. Everything else is "no", including transitions that obviously must
-  exist.
+- Mark a transition "Observed: yes" only if the cited source actually
+  recorded it. Everything else is "no", including transitions that obviously
+  must exist.
 - The Unobserved transitions list is the most useful output of this stage. Do
   not leave it empty to make the model look complete.
-- Under Persisted result, write "unknown — not observable from browser"
-  wherever exploration.md flagged it. Do not guess.
+- Under Persisted result, preserve any uncertainty recorded by the cited
+  source. For imported evidence without a persistence observation, write
+  "unknown — not established by supplied observations." Do not guess.
 - Do not propose risks. That is the next stage.

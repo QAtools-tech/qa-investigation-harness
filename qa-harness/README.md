@@ -51,27 +51,38 @@ ever needs to change, it changes once, here — not once per tool.
 
 ## Pick your tool
 
-Each supported tool exposes status/resume, intake, plan review, and direct
-stage entry points. Use the capability table to choose a reviewer and check
-path that the host can enforce.
+The repository provides native workflow wrappers for some harnesses and a
+manual shared-instructions path for others. Use the capability table and
+[compatibility matrix](../docs/compatibility.md) to identify which entry point
+exists and what has actually been verified.
 
-| Capability | Claude Code | GitHub Copilot | Codex |
-|---|---|---|---|
-| Stage entry | `/qa-*` skills | `.github/prompts/qa-*.prompt.md` | `$qa-*` skills or plain-language fallback |
-| Focused reviewer | Custom agent restricted to Read/Grep/Glob | Custom agent restricted to read/search | Review skill; instructions do not enforce a tool allowlist |
-| Local automatic check in this repo | Manual CLI | Manual CLI | Opt-in Codex `PostToolUse` example |
-| Manual check and CI | `node qa-harness/checks/qa-check.mjs` and `node qa-harness/checks/qa-run-report.mjs` | Same commands | Same commands |
-| Optional source adapter | Requires a host read-only client binding; see `adapters/` | Requires a host read-only client binding; see `adapters/` | Requires a host read-only client binding; see `adapters/` |
+| Capability | Claude Code | VS Code Local | Codex | Copilot harness |
+|---|---|---|---|---|
+| Stage entry | `/qa-*` skills | `.github/prompts/qa-*.prompt.md` | `$qa-*` skills or plain-language fallback | Manual shared-instructions path; native workflow skills not packaged here yet |
+| Focused reviewer | Custom agents declare read/search-only tools | `.github/agents/` declare read/search-only tools | Review skills are read-only by instruction, not enforced | `.github/agents/` are documented but not live-verified in this harness |
+| Local automatic check in this repo | Manual CLI | Manual CLI | Opt-in Codex `PostToolUse` example | Manual CLI |
+| Manual check and CI | Same Node.js commands | Same Node.js commands | Same Node.js commands | Same Node.js commands |
+| Optional source adapter | Requires a host read-only client binding; see `adapters/` | Requires a host read-only client binding; see `adapters/` | Requires a host read-only client binding; see `adapters/` | Requires a host read-only client binding; see `adapters/` |
 
-### GitHub Copilot (VS Code)
+This table distinguishes repository files from runtime support. In current
+VS Code, `.github/prompts/` files run in the Local harness; Copilot harness
+sessions use skills. Local is scheduled for removal in February 2027, and this
+repository has not completed the prompt-to-skill migration. See the
+[compatibility matrix](../docs/compatibility.md) before choosing a setup.
 
-Use `.github/prompts/qa.prompt.md` for status or resume,
-`qa-intake.prompt.md` for intake, `qa-review-plan.prompt.md` for plan review,
-and the other `qa-*.prompt.md` files for direct stages. These are thin
-adapters to the shared rules and stage files. The root [README.md](../README.md), `.github/copilot-instructions.md`,
-and `.vscode/mcp.json` cover the setup.
-Focused reviewer agents are in `.github/agents/` and use only read/search
-tools. The artifact checker remains manual in this adapter.
+### VS Code Local harness (legacy prompt path)
+
+Select the Local harness in VS Code. Use `.github/prompts/qa.prompt.md` for
+status or resume, `qa-intake.prompt.md` for intake,
+`qa-review-plan.prompt.md` for plan review, and the other `qa-*.prompt.md`
+files for direct stages. These are thin adapters to shared rules and stage
+files. The root [README.md](../README.md),
+[`.github/copilot-instructions.md`](../.github/copilot-instructions.md), and
+[`.vscode/mcp.json`](../.vscode/mcp.json) cover repository setup.
+Focused reviewer agents are in `.github/agents/` and declare read/search-only
+tools. Their Local-harness behavior has not been live-verified. The artifact
+checker remains manual in this adapter. These prompt files are not loaded by
+the current Copilot harness; see [migration guidance](../docs/migration.md).
 
 ### Claude Code
 
