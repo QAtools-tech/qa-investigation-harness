@@ -18,6 +18,8 @@ human-reviewed test plan, audits result.
 
 Invoke as skills, in order:
 
+- `/qa-intake` — preview and import local cases, plans, or evidence after confirmation
+- `/qa-review-plan` — read-only review of a supplied plan or spec
 - `/qa-explore` — walk flow, record observations (Stage 1)
 - `/qa-model` — build state/transition model (Stage 2)
 - `/qa-challenge` — risk table, then (after human approval) test plan (Stage 3)

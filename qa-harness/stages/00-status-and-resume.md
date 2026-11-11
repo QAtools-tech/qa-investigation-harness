@@ -47,8 +47,10 @@ stages when their evidence supports review or triage directly.
 | Evidence on disk or supplied now | Current position and next action |
 |---|---|
 | No usable case, spec, or run evidence | Intake is blocked. Request a case, spec, or evidence excerpt with a locator. A new investigation also needs a local ID before any write. |
-| Case supplied, no matching exploration | Intake/explore. For Explore, require a scoped case, confirmed non-production URL, and interactive access. Ask for missing evidence/environment before navigating. |
-| Spec supplied without harness artifacts | Review the existing plan directly. If the user requests conformance validation, also request test source or run evidence as required by the contract. |
+| Case supplied, no matching investigation record | Run `stages/intake.md` to preview and confirm the source first; then Explore if live-path prerequisites are available. |
+| `investigation.md` contains case/requirement evidence, no exploration | Explore if the user requests live-path investigation and supplies the required environment/access. If the evidence is an existing spec, use direct plan review. |
+| `investigation.md` contains identifiable run/failure evidence, no exploration or validation | Triage failures directly, or use direct validation when requested and expected behavior is available. Name missing test source or expected behavior; do not infer assertion intent from a run result. |
+| Spec supplied without harness artifacts | Run `stages/review-plan.md` directly. If the user requests conformance validation, also request test source or run evidence as required by the contract. |
 | Identifiable failure/run evidence without harness artifacts | Triage directly. Report the observed failure and possible causes separately; ask for missing context that would narrow them. |
 | `exploration.md` exists, `flow-model.md` does not | Model from the observations and cite their locators. |
 | `flow-model.md` exists, `risks.md` does not | Challenge Part A from the model and source observations; propose risks only. |

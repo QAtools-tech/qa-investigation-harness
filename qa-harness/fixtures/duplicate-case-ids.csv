@@ -1,0 +1,4 @@
+case_id,title,steps,expected
+,Missing ID case,Open Tasks,Tasks appear
+CASE-201,First duplicate,Choose Open,Open tasks appear
+CASE-201,Second duplicate,Choose Closed,Closed tasks appear

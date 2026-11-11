@@ -8,5 +8,9 @@ the source of truth; do not duplicate their rules here.
   `qa-harness/stages/00-status-and-resume.md`.
 - For a direct stage request, read `qa-harness/RULES.md`, the contract, and
   the matching file under `qa-harness/stages/` before acting.
+- For local case/spec/evidence intake, use `qa-harness/stages/intake.md`;
+  preview mapping and grouping and wait for human confirmation before writing.
+- For review of an existing plan, use `qa-harness/stages/review-plan.md`;
+  report findings without editing source or generator-facing files.
 - Never author Playwright tests or seed files. The consuming project's
   generator owns them.
