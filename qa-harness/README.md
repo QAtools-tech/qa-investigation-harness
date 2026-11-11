@@ -29,6 +29,7 @@ review examples.
 - **[stages/intake.md](stages/intake.md)** — preview/confirm/write workflow
 - **[stages/review-plan.md](stages/review-plan.md)** — direct read-only plan review
 - **[checks/README.md](checks/README.md)** — deterministic artifact checker, manual command, optional hook, and CI scope
+- **[adapters/README.md](adapters/README.md)** — optional read-only source adapters and Jira pilot compatibility
 
 Use `status <investigation-id>` for a read-only progress report or
 `resume <investigation-id>` to continue from the next eligible action. Both
@@ -60,6 +61,7 @@ path that the host can enforce.
 | Focused reviewer | Custom agent restricted to Read/Grep/Glob | Custom agent restricted to read/search | Review skill; instructions do not enforce a tool allowlist |
 | Local automatic check in this repo | Manual CLI | Manual CLI | Opt-in Codex `PostToolUse` example |
 | Manual check and CI | `node qa-harness/checks/qa-check.mjs` | Same command | Same command |
+| Optional source adapter | Requires a host read-only client binding; see `adapters/` | Requires a host read-only client binding; see `adapters/` | Requires a host read-only client binding; see `adapters/` |
 
 ### GitHub Copilot (VS Code)
 

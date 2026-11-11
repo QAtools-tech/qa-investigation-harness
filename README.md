@@ -41,6 +41,7 @@ investigation ID + case, spec, or run
 - **Post-generation auditing** — checks generated assertions against approved oracles and can mutation-check assertion strength.
 - **Read-only status and resume** — reports completed work, blockers, missing evidence, and one next action from artifacts on disk; resume follows the same resolver.
 - **Local source intake and plan review** — previews pasted, Markdown, and CSV evidence with locators and provenance, then writes only after human confirmation; reviews existing plans directly without editing them.
+- **Optional source adapters** — a versioned read-only contract and fixture-tested Jira issue normalizer preserve project scope, locators, revisions, and bounded excerpts; manual intake remains available without a connected provider.
 - **Focused review and deterministic checks** — bounded risk/validation reviewers return cited findings; an optional read-only artifact checker runs manually, through an opt-in Codex hook, or in CI.
 
 ## How the workflow works
@@ -91,6 +92,7 @@ The shared methodology lives in [`qa-harness/`](qa-harness/):
 - [`stages/`](qa-harness/stages/) contains the status/resume resolver and tool-agnostic stage instructions.
 - [`INTAKE.md`](qa-harness/INTAKE.md) defines provenance, safe excerpts, revisions, and CSV preview behavior; [`fixtures/`](qa-harness/fixtures/README.md) contains synthetic examples.
 - [`checks/README.md`](qa-harness/checks/README.md) documents the deterministic checker, opt-in hook, and CI behavior.
+- [`adapters/README.md`](qa-harness/adapters/README.md) documents the normalized source record contract, Jira pilot, and unverified live client bindings.
 - [`.agents/skills/`](.agents/skills/) provides Codex stage and review shortcuts; Codex skills do not enforce reviewer tool restrictions.
 - [`.claude/agents/`](.claude/agents/) and [`.github/agents/`](.github/agents/) provide read/search-only focused reviewers.
 - [`.github/prompts/`](.github/prompts/) provides GitHub Copilot prompt adapters.
@@ -209,7 +211,7 @@ Changes to shared rules affect every adapter, so start with [`CONTRIBUTING.md`](
 
 ## Roadmap and known limits
 
-The current repository is intentionally focused on the investigation layer. Potential future work includes additional tool adapters, automated documentation checks, and optional API/database oracle integrations for consuming projects. None of these are implemented here today.
+The repository includes a fixture-tested Jira reference normalizer and adapter contract. Live Atlassian client bindings and adapters for Xray, Azure DevOps, and Confluence remain future work; optional API/database oracle integrations belong to consuming projects.
 
 ## License
 
