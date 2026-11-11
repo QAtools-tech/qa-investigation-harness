@@ -1,0 +1,86 @@
+{
+  "config": {
+    "rootDir": "C:/consumer"
+  },
+  "stats": {
+    "startTime": "2026-11-11T10:00:00.000Z",
+    "duration": 1250
+  },
+  "suites": [
+    {
+      "title": "Filters",
+      "suites": [
+        {
+          "title": "Task list",
+          "specs": [
+            {
+              "title": "TC-01 Filter tasks",
+              "file": "tests/filter.spec.ts",
+              "line": 12,
+              "column": 3,
+              "tests": [
+                {
+                  "projectName": "chromium",
+                  "expectedStatus": "passed",
+                  "status": "expected",
+                  "results": [
+                    {
+                      "status": "passed",
+                      "duration": 120,
+                      "retry": 0,
+                      "startTime": "2026-11-11T10:00:01.000Z",
+                      "attachments": [{ "name": "private", "body": "must not be copied" }],
+                      "stdout": [{ "text": "must not be copied" }]
+                    }
+                  ]
+                },
+                {
+                  "projectName": "firefox",
+                  "expectedStatus": "passed",
+                  "status": "unexpected",
+                  "results": [
+                    {
+                      "status": "failed",
+                      "duration": 250,
+                      "retry": 0,
+                      "startTime": "2026-11-11T10:00:02.000Z",
+                      "errors": [{ "message": "fixture failure detail is not normalized" }]
+                    }
+                  ]
+                },
+                {
+                  "projectName": "webkit",
+                  "expectedStatus": "passed",
+                  "status": "skipped",
+                  "results": [{ "status": "skipped", "duration": 0, "retry": 0 }]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Saved filters",
+          "specs": [
+            {
+              "title": "TC-02 Save filter survives reload",
+              "file": "tests/filter.spec.ts",
+              "line": 38,
+              "column": 3,
+              "tests": [
+                {
+                  "projectName": "chromium",
+                  "expectedStatus": "passed",
+                  "status": "flaky",
+                  "results": [
+                    { "status": "failed", "duration": 80, "retry": 0 },
+                    { "status": "passed", "duration": 95, "retry": 1 }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

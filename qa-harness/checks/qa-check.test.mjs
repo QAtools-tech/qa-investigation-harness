@@ -249,3 +249,16 @@ test("CI runs the same checker and its Node test suite", async () => {
   assert.match(workflow, /node qa-harness\/checks\/qa-check\.mjs --root qa-harness\/fixtures\/checks/);
   assert.match(workflow, /node --test qa-harness\/checks\/\*\.test\.mjs/);
 });
+
+test("CI and documentation cover offline Playwright report ingestion", async () => {
+  const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+  const workflow = await readFile(path.join(repoRoot, ".github/workflows/qa-harness-check.yml"), "utf8");
+  const checkDocs = await readFile(path.join(repoRoot, "qa-harness/checks/README.md"), "utf8");
+  const fixtureDocs = await readFile(path.join(repoRoot, "qa-harness/fixtures/run-report/README.md"), "utf8");
+
+  assert.match(workflow, /qa-run-report\.test\.mjs/);
+  assert.match(checkDocs, /qa-run-report\.mjs/);
+  assert.match(checkDocs, /does not verify an oracle/i);
+  assert.match(fixtureDocs, /synthetic/i);
+  assert.match(fixtureDocs, /no executable Playwright test code/i);
+});
