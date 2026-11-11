@@ -28,6 +28,7 @@ review examples.
 - **[INTAKE.md](INTAKE.md)** — local source, provenance, preview, and revision rules
 - **[stages/intake.md](stages/intake.md)** — preview/confirm/write workflow
 - **[stages/review-plan.md](stages/review-plan.md)** — direct read-only plan review
+- **[checks/README.md](checks/README.md)** — deterministic artifact checker, manual command, optional hook, and CI scope
 
 Use `status <investigation-id>` for a read-only progress report or
 `resume <investigation-id>` to continue from the next eligible action. Both
@@ -49,8 +50,16 @@ ever needs to change, it changes once, here — not once per tool.
 
 ## Pick your tool
 
-Each supported tool exposes status/resume, intake, and plan review while
-keeping the investigation stages available for focused reruns.
+Each supported tool exposes status/resume, intake, plan review, and direct
+stage entry points. Use the capability table to choose a reviewer and check
+path that the host can enforce.
+
+| Capability | Claude Code | GitHub Copilot | Codex |
+|---|---|---|---|
+| Stage entry | `/qa-*` skills | `.github/prompts/qa-*.prompt.md` | `$qa-*` skills or plain-language fallback |
+| Focused reviewer | Custom agent restricted to Read/Grep/Glob | Custom agent restricted to read/search | Review skill; instructions do not enforce a tool allowlist |
+| Local automatic check in this repo | Manual CLI | Manual CLI | Opt-in Codex `PostToolUse` example |
+| Manual check and CI | `node qa-harness/checks/qa-check.mjs` | Same command | Same command |
 
 ### GitHub Copilot (VS Code)
 
@@ -59,6 +68,8 @@ Use `.github/prompts/qa.prompt.md` for status or resume,
 and the other `qa-*.prompt.md` files for direct stages. These are thin
 adapters to the shared rules and stage files. The root [README.md](../README.md), `.github/copilot-instructions.md`,
 and `.vscode/mcp.json` cover the setup.
+Focused reviewer agents are in `.github/agents/` and use only read/search
+tools. The artifact checker remains manual in this adapter.
 
 ### Claude Code
 
@@ -66,6 +77,7 @@ and `.vscode/mcp.json` cover the setup.
 - `/qa status <id>` reports progress; `/qa resume <id>` continues from the next eligible action
 - Stages are skills: `/qa-intake`, `/qa-review-plan`, `/qa-explore`, `/qa-model`, `/qa-challenge`, `/qa-validate`
 - Playwright MCP is registered in `.mcp.json` (repo root) — no setup needed
+- `qa-risk-challenger` and `qa-validation-reviewer` are read-only custom agents
 
 Example:
 ```
@@ -82,9 +94,14 @@ with `npx playwright init-agents --loop=claude`, then point it at
 
 ### Codex
 
-- `AGENTS.md` (repo root) is read automatically and explains how to run a
-  stage or status/resume action — there's no slash command; ask in plain
-  language, e.g. "status PROJ-1234" or "resume PROJ-1234"
+- `AGENTS.md` (repo root) is read automatically; project skills provide
+  `$qa-intake`, `$qa-review-plan`, `$qa-status-resume`, `$qa-explore`,
+  `$qa-model`, `$qa-challenge`, and `$qa-validate`
+- Plain-language requests are the manual fallback when skills are unavailable
+- `$qa-risk-review` and `$qa-validation-review` are read-only by instruction;
+  Codex skills do not enforce tool restrictions
+- Copy `qa-harness/hooks/codex-hooks.example.json` to `.codex/hooks.json` to
+  opt into the local hook, then review/trust it with `/hooks`
 - Playwright MCP needs a one-time setup command — see `AGENTS.md` for the
   exact `codex mcp add` invocation
 

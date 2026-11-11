@@ -25,6 +25,10 @@ Invoke as skills, in order:
 - `/qa-challenge` — risk table, then (after human approval) test plan (Stage 3)
 - `/qa-validate` — audit generated tests against approved risks (Stage 5)
 
+Focused read-only agents are available for risk and validation review:
+`qa-risk-challenger` and `qa-validation-reviewer`. The parent workflow
+reconciles their cited findings; human approval remains required.
+
 Stage 4 — generating tests — not a skill here. Point
 project's test-generation agent at `specs/<ticket>.plan.md` file Stage 3
 produces, same as handing it any other plan.

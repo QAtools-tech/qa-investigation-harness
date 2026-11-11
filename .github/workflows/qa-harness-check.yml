@@ -1,0 +1,22 @@
+name: QA harness checks
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  artifact-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check synthetic artifacts
+        run: node qa-harness/checks/qa-check.mjs --root qa-harness/fixtures/checks
+      - name: Run checker tests
+        run: node --test qa-harness/checks/*.test.mjs

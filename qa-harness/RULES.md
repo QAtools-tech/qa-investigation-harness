@@ -110,6 +110,9 @@ should be given.
 13. Intake must show and get human confirmation of the proposed ID, source
     mapping/grouping, and normalized preview before writing records. Plan
     review must leave source plans and generator-facing files unchanged.
+14. Focused reviewers are evidence-only. They do not edit artifacts, approve
+    risks, export plans, run tests, or author tests. The parent reconciles
+    their cited findings; only the human decides risk status.
 
 ## Artifact paths
 
