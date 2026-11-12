@@ -40,6 +40,7 @@ function validateReport(report, label) {
   }
   for (const link of report.coverage.links) {
     if (!object(link)) invalid(label, "coverage link");
+    if (!text(link.kind)) invalid(label, "coverage link kind");
     if (link.kind === "plan-test" && (!text(link.fromId) || !text(link.status) || !text(link.toId) || !text(link.targetLocator))) {
       invalid(label, "plan-test link");
     }
@@ -138,7 +139,7 @@ function sideEvidence(report, caseId, projectName) {
   }
   const { link, item } = uniqueExecutions.values().next().value;
   result.status = item.status;
-  result.sourcePointer = link.toId;
+  result.sourcePointer = item.sourcePointer;
   if (projectName === "") {
     result.evidence = "ambiguous";
     result.reason = "The saved report has no project name, so this result cannot be safely aligned.";

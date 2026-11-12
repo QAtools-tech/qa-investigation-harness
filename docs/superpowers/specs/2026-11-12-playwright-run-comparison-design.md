@@ -75,6 +75,8 @@ project name and normalized status from that test entry, and require its status
 to agree with the link's `runStatus`. A mismatch or non-unique join is
 ambiguous. `test-run.fromId` supplies the case association; `plan-test.fromId`
 supplies its mapped-file evidence. Source pointers remain visible as locators.
+Every coverage link must have a non-empty string `kind`; malformed
+discriminators invalidate the report instead of silently dropping evidence.
 The comparison must not infer matches from titles, file paths, current plans,
 or similar-looking test names.
 

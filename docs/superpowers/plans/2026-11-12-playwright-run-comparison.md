@@ -22,7 +22,7 @@
 
 ## Review Focus
 
-- Unsupported schema version or malformed consumed fields must fail with a useful input error and no output files. Test in Task 1 and Task 2.
+- Unsupported schema version or malformed consumed fields, including missing/non-string link kinds, must fail with a useful input error and no output files. Test in Task 1 and Task 2.
 - Optional run provenance fields must be absent, null, or strings; unnamed projects from the current report producer must be preserved as ambiguous. Test model validation and producer-to-comparison CLI behavior.
 - Different investigation IDs or target strings, including whitespace-only differences, must be rejected. Test exact comparisons in Task 1 and CLI mismatch behavior in Task 2.
 - Duplicate/conflicting mappings, non-unique pointer joins, and a `test-run.runStatus` disagreement with the joined `tests[]` status must be ambiguous, not silently selected. Test in Task 1.
@@ -56,7 +56,7 @@ Implement `RunComparisonInputError` and `buildRunComparison(beforeReport, afterR
 
 - [x] **Step 4: Add failing tests for evidence joining and classifications**
 
-Cover the `expected` → `failure` and `expected` → `flaky` regressions, `failure`/`flaky` → `expected` recovery, same-status `unchanged`, other status changes, and `unknown`. Cover `no-result`, `unmapped`, `project-not-included`, duplicate-identical links, conflicting mappings, multiple distinct test-run links, non-unique source-pointer joins, status disagreement, malformed optional provenance fields, and empty/null project names. Assert that case/project rows are made from the union of case IDs and the union of project names; an unnamed project result keeps its status and locator but is ambiguous. Missing evidence is `not comparable` and never called added, removed, passed, or failed.
+Cover the `expected` → `failure` and `expected` → `flaky` regressions, `failure`/`flaky` → `expected` recovery, same-status `unchanged`, other status changes, and `unknown`. Cover `no-result`, `unmapped`, `project-not-included`, duplicate-identical links, conflicting mappings, multiple distinct test-run links, non-unique source-pointer joins, status disagreement, targetLocator-only joins, malformed link kinds, malformed optional provenance fields, and empty/null project names. Assert that case/project rows are made from the union of case IDs and the union of project names; an unnamed project result keeps its status and locator but is ambiguous. Missing evidence is `not comparable` and never called added, removed, passed, or failed.
 
 - [x] **Step 5: Run the focused tests and confirm the expected failures**
 

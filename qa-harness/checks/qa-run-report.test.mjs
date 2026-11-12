@@ -271,6 +271,20 @@ test("shows both evidence states and reasons in Markdown", async (t) => {
   assert.match(markdown, /No stored plan-test mapping exists for this case/);
 });
 
+test("rejects malformed coverage link kinds without writing outputs", async (t) => {
+  const paths = await workspace(t);
+  const inputs = await comparisonInputs(paths);
+  const before = JSON.parse(await readFile(inputs.before, "utf8"));
+  before.coverage.links[0].kind = null;
+  await writeFile(inputs.before, JSON.stringify(before));
+  const result = invoke(compareArgs(inputs), paths.root);
+
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /coverage link kind/i);
+  await assert.rejects(readFile(inputs.json));
+  await assert.rejects(readFile(inputs.markdown));
+});
+
 test("protects both inputs and preserves paired-output semantics", async (t) => {
   const paths = await workspace(t);
   const inputs = await comparisonInputs(paths);

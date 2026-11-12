@@ -162,6 +162,16 @@ test("marks non-unique pointer joins and status disagreement ambiguous", async (
   assert.equal(buildRunComparison(disagreeing, base).rows[0].before.evidence, "ambiguous");
 });
 
+test("reports the matched source pointer when only targetLocator joins", async () => {
+  const { buildRunComparison } = await import("./run-comparison.mjs");
+  const before = mappedReport({ runId: "before" });
+  before.coverage.links[1].toId = "/not-a-test-pointer";
+  const result = buildRunComparison(before, mappedReport({ runId: "after" }));
+
+  assert.equal(result.rows[0].before.evidence, "observed");
+  assert.equal(result.rows[0].before.sourcePointer, "/suites/0/tests/0");
+});
+
 test("rejects malformed and unsupported run reports", async () => {
   const { buildRunComparison, RunComparisonInputError } = await import("./run-comparison.mjs");
   assert.throws(() => buildRunComparison({ ...report({ runId: "before" }), schemaVersion: 1 }, report({ runId: "after" })), RunComparisonInputError);
@@ -174,6 +184,24 @@ test("rejects malformed optional run provenance fields", async () => {
     const before = report({ runId: "before" });
     before.run[field] = { unexpected: "object" };
     assert.throws(() => buildRunComparison(before, report({ runId: "after" })), RunComparisonInputError, field);
+  }
+});
+
+test("rejects missing or non-string coverage link kinds", async () => {
+  const { buildRunComparison, RunComparisonInputError } = await import("./run-comparison.mjs");
+  const base = mappedReport({ runId: "before" });
+  for (const kind of [null, {}, undefined]) {
+    const malformed = {
+      ...base,
+      coverage: {
+        links: base.coverage.links.map((link) => {
+          const changed = { ...link, kind };
+          if (kind === undefined) delete changed.kind;
+          return changed;
+        }),
+      },
+    };
+    assert.throws(() => buildRunComparison(malformed, mappedReport({ runId: "after" })), RunComparisonInputError);
   }
 });
 
