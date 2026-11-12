@@ -10,5 +10,8 @@ Read `qa-harness/RULES.md`, `qa-harness/CONTRACT.md`, and
 `qa-harness/stages/00-status-and-resume.md`, then follow the shared resolver
 exactly.
 
+For resume, use `qa-harness/GUIDED-CHAT.md` for the user-facing summary after
+applying the resolver. Keep the resolver's detailed output for status.
+
 Action: $action
 Investigation: $investigationId
