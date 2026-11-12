@@ -40,18 +40,23 @@ investigation per session, including when resuming from a new chat.
 
 ## Resolve the next action
 
-Use the first applicable row. For direct entry, follow the minimum evidence
-and stop conditions in `CONTRACT.md`; do not force users through earlier
-stages when their evidence supports review or triage directly.
+Use the first applicable row. Skip rows marked **Entry** when the investigation
+has an exploration, model, risks, or validation on disk. A plan alone does
+not establish investigation progress.
+Resolve the saved evidence first, including any malformed or contradictory
+artifacts. A model based on imported observations counts as progress even
+when `exploration.md` is absent. For direct entry, follow the minimum evidence
+and stop conditions in `CONTRACT.md`.
 
 | Evidence on disk or supplied now | Current position and next action |
 |---|---|
-| No usable case, spec, or run evidence | Intake is blocked. Request a case, spec, or evidence excerpt with a locator. A new investigation also needs a local ID before any write. |
-| Case supplied, no matching investigation record | Run `stages/intake.md` to preview and confirm the source first; then Explore if live-path prerequisites are available. |
-| `investigation.md` contains case/requirement evidence, no exploration | Explore if the user requests live-path investigation and supplies the required environment/access. If the evidence is an existing spec, use direct plan review. |
-| `investigation.md` contains identifiable run/failure evidence, no exploration or validation | Triage failures directly, or use direct validation when requested and expected behavior is available. Name missing test source or expected behavior; do not infer assertion intent from a run result. |
-| Spec supplied without harness artifacts | Run `stages/review-plan.md` directly. If the user requests conformance validation, also request test source or run evidence as required by the contract. |
-| Identifiable failure/run evidence without harness artifacts | Triage directly. Report the observed failure and possible causes separately; ask for missing context that would narrow them. |
+| **Entry:** No usable case, spec, observations, or run evidence | Intake is blocked. Request a case, spec, or evidence excerpt with a locator. A new investigation also needs a local ID before any write. |
+| **Entry:** Qualifying recorded observations support direct Model and the user chose it or only that route fits | Use `stages/02-model.md`. Establish a safe investigation ID before writing and cite observation locators. |
+| **Entry:** Case supplied, no matching investigation record | Run `stages/intake.md` to preview and confirm the source first; then Explore if live-path prerequisites are available. |
+| **Entry:** `investigation.md` contains case/requirement evidence | Explore if the user requests live-path investigation and supplies the required environment/access. If the evidence is an existing spec, use direct plan review. |
+| **Entry:** `investigation.md` contains identifiable run/failure evidence | Triage failures directly, or use direct validation when requested and expected behavior is available. Name missing test source or expected behavior; do not infer assertion intent from a run result. |
+| **Entry:** Spec supplied without harness artifacts | Run `stages/review-plan.md` directly. If the user requests conformance validation, also request test source or run evidence as required by the contract. |
+| **Entry:** Identifiable failure/run evidence without harness artifacts | Triage directly. Report the observed failure and possible causes separately; ask for missing context that would narrow them. |
 | `exploration.md` exists, `flow-model.md` does not | Model from the observations and cite their locators. |
 | `flow-model.md` exists, `risks.md` does not | Challenge Part A from the model and source observations; propose risks only. |
 | `risks.md` has `PROPOSED` rows but no `APPROVED` rows | Stop for human review. Name proposed/rejected counts and ask the human to decide the proposed rows. Do not export. |
@@ -106,6 +111,12 @@ reporting rules. After work, report the same status shape with the resulting
 artifacts and next action.
 
 ## Resolution examples
+
+With an intake record and a model based on imported observations, status points
+to Challenge Part A even if there is no `exploration.md`. If the risks already
+exist, resume follows the risk decision and mapping rows. It stops for pending
+human review, checks freshness before export, and handles interrupted mappings
+without adding a duplicate plan entry.
 
 | Scenario | Status result | Resume behavior |
 |---|---|---|

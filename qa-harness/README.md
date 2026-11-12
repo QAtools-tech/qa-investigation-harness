@@ -87,7 +87,7 @@ the current Copilot harness; see [migration guidance](../docs/migration.md).
 ### GitHub Copilot Chat in VS Code
 
 Open the repository root and start a chat with the Copilot harness. Say
-“Start QA with this case” and supply evidence, or use
+“Start QA with this evidence” and supply the relevant files, or use
 `Continue QA for <investigation-id>`. The
 [Copilot instructions](../.github/copilot-instructions.md) direct the session
 to the same [guide](GUIDED-CHAT.md) as Codex and Claude Code. For browser
@@ -95,7 +95,7 @@ stages, verify that the session can access the project's Playwright MCP tools.
 
 ### Claude Code
 
-Say **“Start QA with this case”** and supply your evidence. To pick up saved
+Say **“Start QA with this evidence”** and supply the relevant files. To pick up saved
 work, say **`Continue QA for <investigation-id>`** See the
 [guided chat walkthrough](walkthroughs/guided-chat.md).
 
@@ -120,7 +120,7 @@ with `npx playwright init-agents --loop=claude`, then point it at
 
 ### Codex
 
-Say **“Start QA with this case”** and supply your evidence. To pick up saved
+Say **“Start QA with this evidence”** and supply the relevant files. To pick up saved
 work, say **`Continue QA for <investigation-id>`** See the
 [guided chat walkthrough](walkthroughs/guided-chat.md).
 
