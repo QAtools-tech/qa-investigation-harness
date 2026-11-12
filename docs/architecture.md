@@ -177,12 +177,16 @@ reports never read or copy attachment bodies, stdout, or error payloads, and
 omit unsafe, missing, or body-only attachment paths.
 
 `qa-run-report.mjs compare` compares two saved schema-v2 run reports for the
-same investigation ID and exact target string. It writes a schema-v1 JSON
+same investigation ID and exact target string. It writes a schema-v2 JSON
 comparison and a Markdown summary under the selected project root. Case/project
 rows use each report's stored mapping and execution links; missing, ambiguous,
-and unobserved evidence stays not comparable. `expected` means only that the
-runner reported a passing outcome. Comparison does not establish oracle
-conformance, product quality, or root cause, and it never runs Playwright.
+and unobserved evidence stays not comparable and receives a next action based
+on the earliest unresolved evidence state. The existing states and reasons stay
+visible. `expected` means only that the runner reported a passing outcome.
+Comparison does not establish oracle conformance, product quality, or root
+cause, and it never runs Playwright. The traceability matrix also exposes one
+next action per row, derived from the earliest missing prerequisite; it does
+not make human decisions or repair mappings or tests.
 
 ## Artifact chain
 
