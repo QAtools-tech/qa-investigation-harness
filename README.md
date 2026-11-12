@@ -134,9 +134,15 @@ This repository has no application runtime, package manifest, dependency install
 
 ### Start in chat
 
-In Codex, Claude Code, or GitHub Copilot Chat in VS Code, say **“Start QA
-with this case”** and supply the case, plan, observations, or failed run. The
-assistant suggests a route and shows the next action. To return to saved work, say
+In Codex, Claude Code, or GitHub Copilot Chat in VS Code, attach the evidence
+and ask for what you need:
+
+- **Case:** “Start QA with this case.”
+- **Existing plan:** “Review this plan.”
+- **Recorded observations:** “Model this flow from these observations.”
+- **Failed run:** “Help with this failed run.”
+
+The assistant shows the next action. To return to saved work, say
 **`Continue QA for <investigation-id>`** in a new chat with the same checkout.
 
 Use your team's ticket reference or confirm a local investigation ID if
