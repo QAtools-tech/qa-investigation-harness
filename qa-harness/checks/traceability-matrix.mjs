@@ -1,4 +1,18 @@
-const columns = ["Requirement", "Risk", "Decision", "Case", "Mapped test", "Mapping", "Execution", "Validation", "Sources"];
+const columns = ["Requirement", "Risk", "Decision", "Case", "Mapped test", "Mapping", "Execution", "Validation", "Next action", "Sources"];
+
+function nextMatrixAction({ requirement, risk, decision, decisionStatus, mapping, mappingStatus, execution, validation, hasFinding, selectedRun }) {
+  if (requirement && !risk) return "Review requirement scope; add an evidence-backed risk link only if warranted.";
+  if (risk && (!decision || decisionStatus !== "fresh" || !/^approve/i.test(decision.decision))) {
+    if (decision && decisionStatus === "fresh" && /^reject/i.test(decision.decision)) return "";
+    return "Review the risk and oracle; record or reconcile the human decision.";
+  }
+  if (mappingStatus !== "current") return "Resolve the approved risk's plan and generated-test mapping.";
+  if (mapping && !selectedRun) return "Select a saved run report to inspect execution evidence.";
+  if (mapping && execution === "no matching result") return "Select or generate a report that includes this mapped test.";
+  if (mapping && validation === "not reviewed") return "Run Stage 5 validation for this mapped test against the approved oracle.";
+  if (mapping && hasFinding) return "Review the cited Stage 5 finding; use the project's generator if a test change is warranted.";
+  return "";
+}
 
 export function buildTraceabilityMatrix(coverage, { investigationId = coverage.investigationId, selectedRun = null } = {}) {
   const { requirements = [], risks = [], decisions = [], mappings = [], plans = [], findings = [], matchedTestsByMapping = {}, ambiguousMappingIndexes = [] } = coverage.evidence ?? {};
@@ -15,15 +29,19 @@ export function buildTraceabilityMatrix(coverage, { investigationId = coverage.i
     const validation = findings.filter((item) => item.tcId === mapping?.tcId.toUpperCase());
     const approved = decision && /^approve/i.test(decision.decision);
     const current = decisionLinks[0]?.freshness === "fresh";
+    const mappingStatus = mapping ? ambiguousMappingIndexes.includes(mappingIndex) || duplicateTcMapping || decisionStatus === "ambiguous" ? "ambiguous" : !planLink || planLink.status !== "linked" ? planLink?.status ?? "unresolved" : !fileLink ? "unresolved" : fileLink.status === "missing" ? "missing file" : approved && current ? "current" : approved ? "stale or unknown approval" : "not approved" : risk ? "no mapped test" : "no linked risk";
+    const execution = selectedRun ? (tests.length ? tests.map((test) => `${test.projectName ?? "unknown project"}: ${test.status}`).join("; ") : "no matching result") : "no run selected";
+    const validationText = validation.length ? validation.map((item) => `${item.conformance}: ${item.finding} (${item.locator})`).join("; ") : "not reviewed";
     rows.push({
       requirement: requirement ? `${requirement.id}: ${requirement.title}` : "",
       risk: risk ? `${risk.id}: ${risk.text}` : "",
       decision: decision ? `${decision.id}: ${decision.decision} (${decisionStatus})` : decisionStatus === "ambiguous" ? "ambiguous decisions" : "no decision",
       case: mapping ? mapping.tcId : "",
       mappedTest: mapping?.file ?? "",
-      mappingStatus: mapping ? ambiguousMappingIndexes.includes(mappingIndex) || duplicateTcMapping || decisionStatus === "ambiguous" ? "ambiguous" : !planLink || planLink.status !== "linked" ? planLink?.status ?? "unresolved" : !fileLink ? "unresolved" : fileLink.status === "missing" ? "missing file" : approved && current ? "current" : approved ? "stale or unknown approval" : "not approved" : risk ? "no mapped test" : "no linked risk",
-      execution: selectedRun ? (tests.length ? tests.map((test) => `${test.projectName ?? "unknown project"}: ${test.status}`).join("; ") : "no matching result") : "no run selected",
-      validation: validation.length ? validation.map((item) => `${item.conformance}: ${item.finding} (${item.locator})`).join("; ") : "not reviewed",
+      mappingStatus,
+      execution,
+      validation: validationText,
+      nextAction: nextMatrixAction({ requirement, risk, decision, decisionStatus, mapping, mappingStatus, execution, validation: validationText, hasFinding: validation.length > 0, selectedRun }),
       sources: [requirement?.locator, risk?.locator, decision?.locator, mapping?.locator, plans.find((item) => item.tcId.toUpperCase() === mapping?.tcId.toUpperCase())?.locator, validation[0]?.recordLocator, validation[0]?.locator].filter(Boolean).join("; "),
       _sort: [requirement?.id ?? "", risk?.id ?? "", mapping?.tcId ?? "", mapping?.file ?? ""],
     });
@@ -58,7 +76,7 @@ function csv(value) {
 }
 
 export function renderTraceabilityMatrix(matrix) {
-  const data = matrix.rows.map((row) => columns.map((column) => row[column === "Mapped test" ? "mappedTest" : column === "Mapping" ? "mappingStatus" : column === "Execution" ? "execution" : column === "Validation" ? "validation" : column === "Sources" ? "sources" : column.toLowerCase()] ?? ""));
+  const data = matrix.rows.map((row) => columns.map((column) => row[column === "Mapped test" ? "mappedTest" : column === "Mapping" ? "mappingStatus" : column === "Execution" ? "execution" : column === "Validation" ? "validation" : column === "Next action" ? "nextAction" : column === "Sources" ? "sources" : column.toLowerCase()] ?? ""));
   const markdownText = [
     `# Traceability matrix: ${markdown(matrix.investigationId)}`, "",
     `Selected run: ${markdown(matrix.selectedRun?.runId ?? "no run selected")}${matrix.selectedRun ? ` · Target: ${markdown(matrix.selectedRun.target)} · Revision: ${markdown(matrix.selectedRun.revision ?? "unknown")}` : ""}`, "",
