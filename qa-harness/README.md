@@ -61,7 +61,7 @@ exists and what has actually been verified.
 | Stage entry | `/qa-*` skills | `.github/prompts/qa-*.prompt.md` | `$qa-*` skills or plain-language fallback | Manual shared-instructions path; native workflow skills not packaged here yet |
 | Focused reviewer | Custom agents declare read/search-only tools | `.github/agents/` declare read/search-only tools | Review skills are read-only by instruction, not enforced | `.github/agents/` are documented but not live-verified in this harness |
 | Local automatic check in this repo | Manual CLI | Manual CLI | Opt-in Codex `PostToolUse` example | Manual CLI |
-| Manual check and CI | Same Node.js commands | Same Node.js commands | Same Node.js commands | Same Node.js commands |
+| Manual check and CI | `node qa-harness/checks/qa-check.mjs` and `node qa-harness/checks/qa-run-report.mjs` | Same commands | Same commands | Same commands |
 | Optional source adapter | Requires a host read-only client binding; see `adapters/` | Requires a host read-only client binding; see `adapters/` | Requires a host read-only client binding; see `adapters/` | Requires a host read-only client binding; see `adapters/` |
 
 This table distinguishes repository files from runtime support. In current
