@@ -6,6 +6,14 @@ Repo got risk-driven QA investigation harness. Full rules in `qa-harness/RULES.m
 
 No write Playwright test code self. Test gen belongs project's test-gen agent — see `qa-harness/RULES.md` for get one if missing (`npx playwright init-agents --loop=codex` set one up for this tool). Harness only investigate, make human-reviewed test plan, audit result.
 
+## Guided QA in chat
+
+Ask “Start QA with this case” and supply the case or other evidence, or say
+`Continue QA for <investigation-id>` to pick up saved work. For guided
+requests, including direct review and triage from supplied evidence, read
+[the guided chat instructions](qa-harness/GUIDED-CHAT.md). Use the contract
+and shared resolver they reference.
+
 ## Running a stage
 
 No slash command here — user ask run stage, read `qa-harness/RULES.md` plus matching file below, follow exact, use whatever ticket ID, test case, or slug user gave in message. Ask for anything stage file need but not given.

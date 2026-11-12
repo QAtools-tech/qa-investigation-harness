@@ -3,6 +3,13 @@
 This file is a thin adapter. The shared contract and stage instructions are
 the source of truth; do not duplicate their rules here.
 
+For plain-language QA requests in Copilot Chat, open and read
+[the guided chat instructions](../qa-harness/GUIDED-CHAT.md) before acting.
+Use the guide and its shared contract and resolver when the user wants to
+start with evidence, check progress, or continue an investigation. Examples:
+“Start QA with this case,” `Status for <investigation-id>`, and
+`Continue QA for <investigation-id>`.
+
 - For `status <investigation-id>` or `resume <investigation-id>`, read
   `qa-harness/RULES.md`, `qa-harness/CONTRACT.md`, and
   `qa-harness/stages/00-status-and-resume.md`.

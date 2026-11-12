@@ -21,19 +21,20 @@ does not prove a host loads them or follows them. Statuses are checked as of
 | Codex | `AGENTS.md`; `.agents/skills/qa-*`; optional `qa-harness/hooks/codex-hooks.example.json` | Node.js 20+ for the built-in checks and report tool. Browser stages require Playwright MCP; Codex users register it with the command in `AGENTS.md`. The hook is opt-in and runs after `apply_patch`; it is diagnostic, not a policy boundary. | Documented; wrapper/checker behavior has fixture tests. No fresh Codex-client adoption run was performed for this release check. Reviewer skills do not enforce read-only tool access. |
 | Claude Code | `CLAUDE.md`; `.claude/skills/qa-*`; `.claude/agents/qa-*`; root `.mcp.json` | Browser stages require the configured Playwright MCP server. The checker/report tool uses Node.js 20+ and no package install. | Documented; wrapper/reviewer fixtures are tested. No fresh Claude Code runtime adoption run was performed. |
 | VS Code **Local** harness | `.github/prompts/qa-*.prompt.md`; `.github/agents/*.agent.md`; `.vscode/mcp.json` | Prompt files use the `.github/prompts/` workspace location and are invoked in the Local harness. Playwright's VS Code agent generator currently documents VS Code 1.105 or newer. | Documented; static adapter and fixture tests pass. No fresh VS Code runtime adoption run was performed. The Local harness is deprecated and scheduled for removal in February 2027; check Microsoft's migration guidance before relying on it. |
-| GitHub Copilot harness in VS Code | `.github/copilot-instructions.md`; `.github/agents/*.agent.md`; shared `AGENTS.md` guidance | The repository does not currently package its workflows as `.github/skills/`. VS Code's Copilot harness does not load `*.prompt.md`; use the manual shared-instructions path or migrate the prompts to native skills and verify them in a fresh Copilot session. | Partially documented; full workflow wrapper compatibility is not verified. Do not treat `.github/prompts/` as Copilot-harness entry points. |
+| GitHub Copilot harness in VS Code | `.github/copilot-instructions.md`; `.github/agents/*.agent.md`; shared `AGENTS.md` guidance | Use plain-language start, status, and continue requests. The repository instructions point to the [shared guide](../qa-harness/GUIDED-CHAT.md). VS Code Local prompt files remain a separate entry point. | Repository wiring documented. Verify instruction discovery and routing in a fresh Copilot Chat session. Browser and generator handoff behavior are unverified. |
 | Cursor and other clients | No repository-native entry point | Use shared Markdown rules manually only if the client can read the repository. | Not set up or verified. |
 
 Official client references checked for this matrix:
 [Codex skills](https://developers.openai.com/plugins/concepts/skills),
 [Claude Code skills](https://code.claude.com/docs/en/skills),
+[VS Code custom instructions](https://code.visualstudio.com/docs/agents/reference/custom-instructions-reference),
 [VS Code prompt files](https://code.visualstudio.com/docs/agent-customization/prompt-files),
 [VS Code custom agents](https://code.visualstudio.com/docs/agent-customization/custom-agents),
 [VS Code customization migration](https://code.visualstudio.com/docs/agent-customization/migrate-customizations),
 and [Playwright test agents](https://playwright.dev/docs/test-agents).
 Microsoft currently documents that prompt files run only in Local harness
-sessions, Copilot harness sessions use skills instead, and Local is scheduled
-for removal in February 2027. Playwright's current test-agent guide lists
+sessions. Copilot harness sessions can use skills for reusable prompts. Local
+is scheduled for removal in February 2027. Playwright's current test-agent guide lists
 VS Code 1.105+ for that external agent experience. These statements describe
 the linked upstream docs, not a runtime test of this repository's wrappers.
 

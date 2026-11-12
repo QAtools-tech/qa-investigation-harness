@@ -46,7 +46,11 @@ Local harness. Microsoft's current documentation says prompt files are not
 loaded by Copilot harness sessions; reusable Copilot workflows use skills.
 The Local harness is scheduled for removal in February 2027.
 
-To adopt these workflows in the Copilot harness:
+For plain-language use, open Copilot Chat with the repository root and follow
+[the guided chat walkthrough](../qa-harness/walkthroughs/guided-chat.md). The
+repository's Copilot instructions already point to the shared guide.
+
+To replace the Local prompt shortcuts with Copilot skills:
 
 1. Follow Microsoft's [prompt-file migration guide](https://code.visualstudio.com/docs/agent-customization/migrate-customizations)
    and convert each prompt into a workspace skill in `.github/skills/` (or

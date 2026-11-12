@@ -58,7 +58,7 @@ exists and what has actually been verified.
 
 | Capability | Claude Code | VS Code Local | Codex | Copilot harness |
 |---|---|---|---|---|
-| Stage entry | `/qa-*` skills | `.github/prompts/qa-*.prompt.md` | `$qa-*` skills or plain-language fallback | Manual shared-instructions path; native workflow skills not packaged here yet |
+| Stage entry | `/qa-*` skills | `.github/prompts/qa-*.prompt.md` | `$qa-*` skills or plain-language requests | Plain-language guided chat via `.github/copilot-instructions.md` |
 | Focused reviewer | Custom agents declare read/search-only tools | `.github/agents/` declare read/search-only tools | Review skills are read-only by instruction, not enforced | `.github/agents/` are documented but not live-verified in this harness |
 | Local automatic check in this repo | Manual CLI | Manual CLI | Opt-in Codex `PostToolUse` example | Manual CLI |
 | Manual check and CI | `node qa-harness/checks/qa-check.mjs` and `node qa-harness/checks/qa-run-report.mjs` | Same commands | Same commands | Same commands |
@@ -66,8 +66,8 @@ exists and what has actually been verified.
 
 This table distinguishes repository files from runtime support. In current
 VS Code, `.github/prompts/` files run in the Local harness; Copilot harness
-sessions use skills. Local is scheduled for removal in February 2027, and this
-repository has not completed the prompt-to-skill migration. See the
+sessions can use the repository instructions for guided chat. Local is
+scheduled for removal in February 2027. See the
 [compatibility matrix](../docs/compatibility.md) before choosing a setup.
 
 ### VS Code Local harness (legacy prompt path)
@@ -84,7 +84,20 @@ tools. Their Local-harness behavior has not been live-verified. The artifact
 checker remains manual in this adapter. These prompt files are not loaded by
 the current Copilot harness; see [migration guidance](../docs/migration.md).
 
+### GitHub Copilot Chat in VS Code
+
+Open the repository root and start a chat with the Copilot harness. Say
+“Start QA with this case” and supply evidence, or use
+`Continue QA for <investigation-id>`. The
+[Copilot instructions](../.github/copilot-instructions.md) direct the session
+to the same [guide](GUIDED-CHAT.md) as Codex and Claude Code. For browser
+stages, verify that the session can access the project's Playwright MCP tools.
+
 ### Claude Code
+
+Say **“Start QA with this case”** and supply your evidence. To pick up saved
+work, say **`Continue QA for <investigation-id>`** See the
+[guided chat walkthrough](walkthroughs/guided-chat.md).
 
 - `CLAUDE.md` (repo root) points here automatically
 - `/qa status <id>` reports progress; `/qa resume <id>` continues from the next eligible action
@@ -106,6 +119,10 @@ with `npx playwright init-agents --loop=claude`, then point it at
 `specs/PROJ-1234.plan.md`.
 
 ### Codex
+
+Say **“Start QA with this case”** and supply your evidence. To pick up saved
+work, say **`Continue QA for <investigation-id>`** See the
+[guided chat walkthrough](walkthroughs/guided-chat.md).
 
 - `AGENTS.md` (repo root) is read automatically; project skills provide
   `$qa-intake`, `$qa-review-plan`, `$qa-status-resume`, `$qa-explore`,
