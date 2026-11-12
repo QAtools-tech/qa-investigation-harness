@@ -1,7 +1,7 @@
 const columns = ["Requirement", "Risk", "Decision", "Case", "Mapped test", "Mapping", "Execution", "Validation", "Next action", "Sources"];
 
-function nextMatrixAction({ requirement, risk, decision, decisionStatus, mapping, mappingStatus, execution, validation, hasFinding, selectedRun }) {
-  if (requirement && !risk) return "Review requirement scope; add an evidence-backed risk link only if warranted.";
+function nextMatrixAction({ requirement, risk, hasUnknownRequirementReference, decision, decisionStatus, mapping, mappingStatus, execution, validation, hasFinding, selectedRun }) {
+  if ((requirement && !risk) || hasUnknownRequirementReference) return "Review requirement scope; add an evidence-backed risk link only if warranted.";
   if (risk && (!decision || decisionStatus !== "fresh" || !/^approve/i.test(decision.decision))) {
     if (decision && decisionStatus === "fresh" && /^reject/i.test(decision.decision)) return "";
     return "Review the risk and oracle; record or reconcile the human decision.";
@@ -41,7 +41,7 @@ export function buildTraceabilityMatrix(coverage, { investigationId = coverage.i
       mappingStatus,
       execution,
       validation: validationText,
-      nextAction: nextMatrixAction({ requirement, risk, decision, decisionStatus, mapping, mappingStatus, execution, validation: validationText, hasFinding: validation.length > 0, selectedRun }),
+      nextAction: nextMatrixAction({ requirement, risk, hasUnknownRequirementReference: risk?.requirementIds?.some((id) => !requirements.some((item) => item.id.toUpperCase() === id.toUpperCase())), decision, decisionStatus, mapping, mappingStatus, execution, validation: validationText, hasFinding: validation.length > 0, selectedRun }),
       sources: [requirement?.locator, risk?.locator, decision?.locator, mapping?.locator, plans.find((item) => item.tcId.toUpperCase() === mapping?.tcId.toUpperCase())?.locator, validation[0]?.recordLocator, validation[0]?.locator].filter(Boolean).join("; "),
       _sort: [requirement?.id ?? "", risk?.id ?? "", mapping?.tcId ?? "", mapping?.file ?? ""],
     });

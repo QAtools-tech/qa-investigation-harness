@@ -165,6 +165,7 @@ function matrixActionCoverage({
   mapping = true,
   runMatch = true,
   findings = [],
+  requirementIds = requirement ? ["C1"] : [],
 } = {}) {
   const links = [];
   if (risk && decision !== null) {
@@ -178,7 +179,7 @@ function matrixActionCoverage({
     links,
     evidence: {
       requirements: requirement ? [{ id: "C1", title: "Filter requirement", locator: "investigation.md:1" }] : [],
-      risks: risk ? [{ id: "R1", text: "Filter risk", requirementIds: requirement ? ["C1"] : [], locator: "risks.md:1" }] : [],
+      risks: risk ? [{ id: "R1", text: "Filter risk", requirementIds, locator: "risks.md:1" }] : [],
       decisions: decision === null ? [] : [{ id: "D1", riskId: "R1", decision, locator: "risks.md:5" }],
       mappings: mapping ? [{ riskId: "R1", tcId: "TC-01", file: "tests/filter.spec.ts", locator: "risks.md:10" }] : [],
       plans: mapping ? [{ tcId: "TC-01", locator: "specs/CASE-300.plan.md:3" }] : [],
@@ -196,6 +197,16 @@ function matrixActionRow(options, selectedRun = null) {
 test("missing requirement risk link recommends scope review", () => {
   const row = matrixActionRow({ requirement: true, risk: false, decision: null, mapping: false });
   assert.equal(row.nextAction, "Review requirement scope; add an evidence-backed risk link only if warranted.");
+});
+
+test("dangling requirement references recommend fixing the link before later steps", () => {
+  const dangling = buildTraceabilityMatrix(matrixActionCoverage({ requirement: false, requirementIds: ["C999"] } )).rows[0];
+  assert.equal(dangling.nextAction, "Review requirement scope; add an evidence-backed risk link only if warranted.");
+  assert.match(dangling.sources, /risks\.md:1/);
+
+  const mixed = buildTraceabilityMatrix(matrixActionCoverage({ requirementIds: ["C1", "C999"] })).rows[0];
+  assert.equal(mixed.nextAction, "Review requirement scope; add an evidence-backed risk link only if warranted.");
+  assert.match(mixed.sources, /risks\.md:1/);
 });
 
 for (const scenario of [
@@ -261,4 +272,3 @@ test("matrix Markdown and CSV render next action", () => {
   assert.match(csv, /"Next action"/);
   assert.match(csv, /"'=HYPERLINK"/);
 });
-
