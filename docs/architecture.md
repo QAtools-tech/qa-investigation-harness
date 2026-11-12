@@ -1,33 +1,67 @@
 # Architecture
 
-The QA Investigation Harness is a documentation-and-prompt workflow that sits before a consuming project's Playwright test-generation agent. It separates browser observation, modeling, risk review, plan generation, and post-generation validation so that each stage has a clear owner and artifact.
+The QA Investigation Harness supports evidence-led entry from a local case, selected provider record, existing plan/spec, recorded observations, or failed run. It sits before a consuming project's Playwright test-generation agent and after test generation for conformance review. Shared instructions route users to the eligible stage; supporting tools handle scoped intake, deterministic artifact checks, and offline run-report analysis.
 
 ## System boundary
 
 ```mermaid
 flowchart TB
-    U[Human: investigation ID + case, spec, or run evidence] --> A[Tool adapter]
-    A -->|status or resume| R[Status / resume resolver]
-    A -->|direct stage request| B[Shared rules and stage instructions]
-    A -->|intake| N[Preview, confirm, then investigation.md]
-    A -->|plan review| P[Read-only findings with locators]
-    R -->|status: read only| S[Progress, blockers, next action]
-    R -->|resume: eligible action| B[Shared rules and stage instructions]
-    B --> C[Playwright MCP in snapshot mode]
-    C --> D[exploration.md]
-    D --> E[flow-model.md]
-    E --> F[risks.md: PROPOSED]
-    F --> G{Human edits status}
-    G -->|APPROVED rows| H[specs/<ticket>.plan.md]
-    H --> I[Consuming project's test-generation agent]
-    I --> J[Generated test files outside this repository]
-    J --> K[qa-validate]
-    F --> K
-    H --> K
-    K --> L[validation.md]
+    U[Human supplies one investigation ID and evidence] --> A[Client adapter or plain-language entry]
+    A --> R{Select route from evidence}
+    A -->|existing investigation| SR[Status / resume resolver]
+    SR -->|status| S[Read-only position, blockers, missing evidence]
+    SR -->|resume| R
+
+    R -->|local case or CSV| IN[Intake preview]
+    R -->|selected provider record| JA[Configured, scoped read-only adapter]
+    JA --> IN
+    IN -->|human confirms preview| IR[investigation.md]
+    IN -->|missing or ambiguous input| STOP[Name missing evidence and stop]
+
+    R -->|existing plan or spec| PR[Direct read-only plan review]
+    R -->|failure evidence| TR[Direct triage]
+    R -->|existing Playwright JSON| RR[Offline run-report CLI]
+    RR --> REP[Coverage links and failure triage]
+
+    IR --> ER{Evidence and prerequisites}
+    ER -->|confirmed non-production URL and account| EX[Explore with Playwright MCP snapshot]
+    ER -->|recorded or imported observations| MOD[Model states, transitions, unknowns]
+    ER -->|required evidence missing| STOP
+    EX --> EXP[exploration.md: observations]
+    EXP --> MOD
+    MOD --> FM[flow-model.md]
+    FM --> CH[Challenge Part A]
+    CH --> RT[risks.md: PROPOSED rows]
+    RT --> HUMAN{Human records each decision}
+    HUMAN -->|missing, stale, or not approved| STOP
+    HUMAN -->|fresh APPROVED rows| P[Challenge Part B: plan and mapping]
+    P --> PLAN[Approved generator plan]
+    PLAN --> GEN[Consuming project's test-generation agent]
+    GEN --> TEST[Generated test files outside this repository]
+    TEST --> VAL[Validate approved oracle against mapped source]
+    REP -. selected run evidence .-> VAL
+
+    subgraph REPO_CHECKS[Repository checks]
+        QC[Structural artifact checker]
+        NT[Node test suite]
+        CI[CI fixture and test run]
+        QC --> CI
+        NT --> CI
+    end
 ```
 
-The boundary around the consuming project matters: this repository does not own the application's runtime, test account, seed data, generated specs, API client, database, or CI pipeline. It produces and audits documentation artifacts that another project can use.
+The boundary around the consuming project matters: this repository does not own the application's runtime, test account, seed data, generated specs, API client, database, or product CI pipeline. It produces and audits documentation artifacts that another project can use. The contract allows direct plan review, triage, and modeling from qualifying imported observations; users do not have to run every stage in order when their evidence supports a direct route.
+
+## Entry routes
+
+| Supplied evidence | Start here | Guard or result |
+| --- | --- | --- |
+| Local case, CSV, or explicit provider reference | Intake | Preview locators, mapping, grouping, omissions, and missing expected behavior; wait for confirmation before writing. Provider adapters are scoped and read-only. |
+| Existing investigation artifacts | `status <id>` or `resume <id>` | Status is read-only. Resume follows the artifact-based resolver and stops on missing or stale approval. |
+| Existing plan or spec | Direct plan review | Report claims, ambiguities, and locators; leave the source plan unchanged. |
+| Recorded observations with locators | Model | Model directly from supplied observations; preserve unknowns and do not claim live exploration. |
+| Identifiable failure evidence | Triage | Separate observed failure from possible causes and name the evidence needed to narrow them. |
+| Existing Playwright JSON reporter file | Offline run-report CLI | Requires explicit run ID and target; writes Markdown/JSON coverage and triage. It does not run Playwright or infer cause. |
 
 ## Source-of-truth hierarchy
 
@@ -40,7 +74,7 @@ The boundary around the consuming project matters: this repository does not own 
 | Source adapter contract | [`qa-harness/adapters/CONTRACT.md`](../qa-harness/adapters/CONTRACT.md) | Optional read-only capabilities, normalized records, scoped paging, and errors |
 | Jira reference adapter | [`qa-harness/adapters/jira/`](../qa-harness/adapters/jira/README.md) | Configured Jira issue normalization; no Xray, Confluence, or writeback |
 | Focused reviewer contracts | [`qa-harness/stages/risk-reviewer.md`](../qa-harness/stages/risk-reviewer.md), [`qa-harness/stages/validation-reviewer.md`](../qa-harness/stages/validation-reviewer.md) | Evidence-only review inputs, output shape, and decision boundaries |
-| Artifact checker | [`qa-harness/checks/`](../qa-harness/checks/) | Deterministic, read-only artifact diagnostics for manual, optional hook, and CI use |
+| Deterministic QA tools | [`qa-harness/checks/`](../qa-harness/checks/) | Structural artifact checks, Markdown link checks, offline Playwright report ingestion, and Node tests for local and CI use |
 | VS Code Local prompt adapters | [`../.github/prompts/`](../.github/prompts/) | Prompt shape and arguments for the Local harness; the current Copilot harness does not load prompt files |
 | Copilot reviewer agents | [`../.github/agents/`](../.github/agents/) | Scoped review roles declare read/search-only tools; runtime behavior is not live-verified |
 | Claude Code adapters | [`../.claude/skills/`](../.claude/skills/) | Skill metadata and argument forwarding |
@@ -62,11 +96,12 @@ verified yet.
 
 ### Focused reviewers and artifact checks
 
-The risk challenger reads one investigation's exploration and flow model and
-returns candidate gaps with transition references, evidence, a proposed
-oracle, and missing evidence. The validation reviewer traces approved risks
-through the plan mapping and available generated-test evidence; it stops when
-approval is missing or stale. Both roles return cited findings only. Claude
+The risk challenger reads one investigation's exploration or imported
+observations and flow model, then returns candidate gaps with transition
+references, evidence, a proposed oracle, and missing evidence.
+The validation reviewer traces approved risks through the plan mapping and
+available generated-test evidence; it stops when approval is missing or stale.
+Both roles return cited findings only. Claude
 Code and Copilot reviewer definitions declare read/search-only tools; this
 repository has not verified their behavior in a live client session. Codex
 skills describe the same boundary but cannot enforce a tool allowlist. See the
@@ -86,6 +121,12 @@ are idempotent; changed sources append revisions and impact notes. Plan review
 is a direct, read-only entry point that reports claims and uncertainties with
 locators, without changing the source plan or generator files.
 
+These are direct entry points, not mandatory steps in a single linear chain.
+The investigation contract also permits direct modeling from qualifying
+imported observations and direct triage from identifiable run evidence. Triage
+records what failed separately from possible causes and requests the test,
+setup, revision, or environment context needed to narrow them.
+
 ### Status and resume
 
 `status` reads the investigation artifacts and reports the current position,
@@ -103,7 +144,7 @@ It does not propose risks, create seeds, or write test code.
 
 ### Stage 2: model
 
-`qa-model` reads `exploration.md` and turns it into states, transitions, inputs/outputs, dependencies, and an explicit list of unobserved transitions. It must not promote an inference to an observed fact and must preserve “unknown” for persisted results the browser could not verify.
+`qa-model` reads `exploration.md` or qualifying imported observations and turns them into states, transitions, inputs/outputs, dependencies, and an explicit list of unobserved transitions. It must cite source locators, must not promote an inference to an observed fact, and must preserve unknown outcomes that the evidence cannot establish.
 
 ### Stage 3: challenge
 
@@ -115,7 +156,17 @@ The plan is intentionally written as normal test-plan prose. A separate test-gen
 
 ### Stage 5: validate
 
-`qa-validate` follows the generated mapping from risk ID to test-case ID and file, compares the generated assertion with the approved oracle, and records conformance findings. Its mutation mode temporarily changes an expected value, reruns the test, and restores the original immediately. It reports raw output and weak assertions; it does not repair generated tests.
+`qa-validate` follows the generated mapping from risk ID to test-case ID and file, compares the generated assertion with the approved oracle, and records conformance findings. Its mutation mode runs only when explicitly requested: it temporarily changes an expected value, reruns the test, and restores the original immediately. It reports raw output and weak assertions; it does not repair generated tests.
+
+### Offline run reports and coverage
+
+`qa-run-report.mjs` ingests one existing Playwright JSON reporter file together
+with one investigation's artifacts and explicit run ID and target. It writes
+JSON and Markdown reports with requirement-to-risk-to-decision-to-test-to-run
+links and a failure triage timeline. Links remain unresolved when evidence is
+missing or ambiguous. The command does not invoke Playwright, access a browser
+or provider, determine an oracle, infer a root cause, or label a suite healthy.
+The human supplies any conformance finding through a cited, TC-keyed record.
 
 ## Artifact chain
 
@@ -123,11 +174,12 @@ The plan is intentionally written as normal test-plan prose. A separate test-gen
 | --- | --- | --- | --- |
 | `qa-artifacts/<id>/investigation.md` | Intake | Pasted or local case/spec/evidence | Source-linked claims, omissions, conflicts, and import revisions |
 | `qa-artifacts/<ticket>/exploration.md` | `qa-explore` | Ticket, test case, live non-production flow | Factual browser observations |
-| `qa-artifacts/<ticket>/flow-model.md` | `qa-model` | `exploration.md` | State/transition model and unobserved transitions |
+| `qa-artifacts/<ticket>/flow-model.md` | `qa-model` | `exploration.md` or cited imported observations | State/transition model and unobserved transitions |
 | `qa-artifacts/<ticket>/risks.md` | `qa-challenge` Part A and human | `flow-model.md` | Proposed risks, real oracles, observability, and human status |
 | `specs/<ticket>.plan.md` | `qa-challenge` Part B | Approved rows plus source-date chain | Generator-readable plan, without harness-internal risk metadata |
 | Generated test files | Consuming project's generator | Plan and consuming project setup | Playwright code outside this repository |
 | `qa-artifacts/<ticket>/validation.md` | `qa-validate` | Mapping, plan, generated tests, raw runs | Oracle conformance and mutation findings |
+| `qa-artifacts/<id>/run-report.json` and `qa-artifacts/<id>/run-report.md` | Offline report CLI | Existing Playwright JSON, investigation artifacts, run ID, and target | Coverage links, raw result references, and failure triage; no test execution or automatic conformance verdict |
 
 Dates recorded in each artifact let later stages detect stale upstream observations. Existing `TC-<NN>` entries are append-only when a plan is extended.
 
@@ -137,6 +189,8 @@ Dates recorded in each artifact let later stages detect stale upstream observati
 - Credentials are interactive inputs and are never written to any repository file.
 - The confirmed non-production URL may be recorded because it is part of the plan context.
 - The harness never marks risks approved or rejected.
+- Optional provider adapters read only caller-selected scopes; they never write back or store credentials.
+- Offline report ingestion reads an existing result file; it does not execute a run or infer its root cause.
 - Browser-rendered confirmation is not treated as proof of persistence, email delivery, background processing, or other non-observable effects.
 - Snapshot mode is the default; vision or coordinate interaction is not used unless the accessibility tree is genuinely empty and that fact is stated.
 - One flow is handled per session so artifacts remain attributable to one ticket and test case.

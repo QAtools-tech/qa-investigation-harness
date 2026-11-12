@@ -43,25 +43,43 @@ investigation ID + case, spec, or run
 - **Local source intake and plan review** — previews pasted, Markdown, and CSV evidence with locators and provenance, then writes only after human confirmation; reviews existing plans directly without editing them.
 - **Optional source adapters** — a versioned read-only contract and fixture-tested Jira issue normalizer preserve project scope, locators, revisions, and bounded excerpts; manual intake remains available without a connected provider.
 - **Offline Playwright report ingestion and coverage** — reads an existing JSON reporter file without running Playwright, then produces Markdown/JSON triage and coverage reports linked to investigation artifacts. Missing and ambiguous links stay visible; a run result does not prove the oracle or its root cause.
-- **Focused review and deterministic checks** — bounded risk/validation reviewers return cited findings; an optional read-only artifact checker runs manually, through an opt-in Codex hook, or in CI.
+- **Focused review and deterministic checks** — bounded risk/validation reviewers return cited findings; structural artifact and Markdown-link checks plus the built-in Node suite run locally and in CI, with an opt-in Codex hook for artifact diagnostics.
 
 ## How the workflow works
 
 ```mermaid
 flowchart LR
-    A[Investigation ID + case, spec, or run] --> R[Status / resume resolver]
-    R -->|status| S[Read-only progress report]
-    R -->|resume| B[Evidence-qualified next action]
-    B --> C[Observations and flow model]
-    C --> D[Proposed risks]
-    D --> E{Human reviews risks.md}
-    E -->|Fresh approval| F[Stage 3B: write plan]
-    F --> G[External test-generation agent]
-    G --> H[Stage 5: qa-validate]
-    H --> I[validation.md]
+    U[One investigation ID + supplied evidence] --> R{Choose entry from evidence}
+    R -->|Existing artifacts| SR[status or resume]
+    SR -->|status| S[Read-only progress and blockers]
+    SR -->|resume| N[Next eligible stage or named stop]
+    R -->|Case or CSV| IN[Preview source, mapping, and missing evidence]
+    R -->|Selected Jira issue| JA[Configured read-only adapter]
+    JA --> IN
+    IN -->|Human confirms preview| ID[investigation.md]
+    IN -->|Missing or ambiguous input| STOP[Name it and wait]
+    R -->|Existing plan or spec| PR[Direct read-only plan review]
+    R -->|Failure evidence| TR[Direct triage]
+    R -->|Existing Playwright JSON| RR[Offline report CLI]
+    R -->|Recorded observations| EV
+    RR --> REP[Coverage links and failure triage]
+    ID --> EV{Evidence route}
+    EV -->|Non-production URL + interactive account| EX[Explore with Playwright snapshot]
+    EV -->|Recorded or imported observations| MOD[Model states and transitions]
+    EV -->|Required evidence missing| STOP
+    EX --> OBS[exploration.md]
+    OBS --> MOD
+    MOD --> CH[Challenge Part A: PROPOSED risks]
+    CH --> HR{Human decides each risk}
+    HR -->|Missing, stale, or rejected| STOP
+    HR -->|Fresh approved risk| PLAN[Challenge Part B: plan + mapping]
+    PLAN --> GEN[Consuming project's test-generation agent]
+    GEN --> TEST[Generated tests in consuming project]
+    TEST --> VAL[Validate approved oracle against test source]
+    REP -. Selected run evidence .-> VAL
 ```
 
-Ask for `status <investigation-id>` to inspect progress without changing files, or `resume <investigation-id>` to continue from the next eligible action. The human approval and generator handoff remain explicit stops. The harness never silently decides which risks matter, and it never writes Playwright test code or seed files.
+Use [the investigation contract](qa-harness/CONTRACT.md) to choose the first stage from the evidence you have; a spec or run can enter directly without a browser exploration. Use `status <investigation-id>` for a read-only progress report, or `resume <investigation-id>` to continue from the next eligible stage. Missing evidence, a missing or stale approval, and the external generator handoff are explicit stops.
 
 For the deeper artifact contract and boundaries, see [Architecture](docs/architecture.md).
 
@@ -69,20 +87,21 @@ For the deeper artifact contract and boundaries, see [Architecture](docs/archite
 
 Each flow is identified by an existing ticket ID or a local investigation ID:
 
-| Stage | Input | Output |
+| Stage or tool | Input | Output |
 | --- | --- | --- |
 | Status | Investigation ID and available artifacts | Read-only status report |
 | Resume | Investigation ID and evidence for the next eligible action | Existing stage output or a named blocker |
 | Intake | Pasted/local case, Markdown plan, or evidence excerpt | Preview; after confirmation, `qa-artifacts/<id>/investigation.md` |
-| Review plan | Existing plan/spec | Read-only findings with source locators |
-| Explore | Investigation ID, scoped case, confirmed non-production URL, interactive test account | `qa-artifacts/<id>/exploration.md` |
-| Model | Exploration artifact or qualifying imported observations | `qa-artifacts/<id>/flow-model.md` |
-| Challenge Part A | Flow model and cited observations | `qa-artifacts/<id>/risks.md` with `PROPOSED` rows |
-| Human review | Risk table | `APPROVED` / `REJECTED` statuses entered by the human only |
+| Direct plan review | Existing plan or spec | Read-only findings with source locators; source stays unchanged |
+| Explore | Scoped case, confirmed non-production URL, interactive test account | `qa-artifacts/<id>/exploration.md` with observations only |
+| Model | Exploration artifact or qualifying imported observations | `qa-artifacts/<id>/flow-model.md` with observed and unobserved transitions |
+| Challenge Part A | Flow model and cited observations | `qa-artifacts/<id>/risks.md` with `PROPOSED` risks only |
+| Human review | Proposed risk table and current dependencies | Human-recorded `APPROVED` / `REJECTED` decisions; the harness never decides |
 | Challenge Part B | Fresh approved risks, dependencies, usable steps | `specs/<id>.plan.md` plus generated mapping in `risks.md` |
 | External generator | The plan file and the consuming project's test setup | Generated test files in that project |
-| Validate | Expected behavior plus test source or run evidence | `qa-artifacts/<id>/validation.md` |
-| Offline run report | Existing Playwright JSON report, investigation artifacts, run ID, and target | `qa-artifacts/<id>/run-report.json` and `run-report.md` with coverage links and failure triage |
+| Validate | Current approvals, mapping, plan, and mapped test source | `qa-artifacts/<id>/validation.md`; optional assertion mutation is explicit and restored |
+| Triage | Identifiable failure or run evidence | Observed failure, separate possible causes, and missing context |
+| Offline run report | Existing Playwright JSON report, investigation artifacts, run ID, and target | `qa-artifacts/<id>/run-report.json` and `qa-artifacts/<id>/run-report.md` with coverage links and failure triage |
 
 The `qa-artifacts/` and `specs/` directories are generated workflow output and are intentionally ignored by default. This repository documents and validates the process; it does not publish real investigation findings.
 
@@ -114,10 +133,12 @@ This repository has no application runtime, package manifest, dependency install
 
 ### Choose where to start
 
-- **A local case or CSV:** begin with Intake. Follow the [CSV approval-boundary walkthrough](qa-harness/walkthroughs/csv-case-to-approved-handoff.md).
-- **An existing plan or spec:** use direct plan review; do not force it through browser exploration.
-- **A failed run:** begin with triage. For an existing Playwright JSON report, use the [offline report command](qa-harness/checks/README.md#offline-playwright-run-report), then review its coverage links and triage. Follow the [spec-and-run walkthrough](qa-harness/walkthroughs/spec-and-failed-run.md).
-- **Existing investigation artifacts:** ask for `status <id>` or `resume <id>`; resume stops at human approval and generator handoff boundaries.
+- **Local case or CSV:** start with Intake. Inspect the preview and confirm the ID, source mapping, and grouping before import. See the [CSV walkthrough](qa-harness/walkthroughs/csv-case-to-approved-handoff.md).
+- **Selected Jira issue:** use Intake only if a scoped read-only Jira adapter is configured; otherwise use the local/manual path. A Jira status is source evidence, never human approval.
+- **Recorded observations:** enter Model directly when the observations have source locators; do not claim a live exploration.
+- **Existing plan or spec:** use direct read-only plan review; do not force it through browser exploration.
+- **Failure evidence:** start with triage, keeping the observed failure separate from possible causes. For an existing Playwright JSON report, use the [offline report command](qa-harness/checks/README.md#offline-playwright-run-report), then review coverage links and triage. See the [spec-and-run walkthrough](qa-harness/walkthroughs/spec-and-failed-run.md).
+- **Existing investigation artifacts:** ask for `status <id>` or `resume <id>`; status reads only, and resume follows the artifact-based resolver.
 
 See [compatibility](docs/compatibility.md) before selecting a client and
 [migration guidance](docs/migration.md) before moving legacy artifacts.
@@ -177,9 +198,13 @@ The harness requires a non-production target URL and an interactive test account
 
 - It does not create, edit, or suggest Playwright test code.
 - It does not create seed files.
-- It does not invent ticket IDs or test cases.
+- It does not invent case content or quietly assign an investigation ID; new IDs are proposed for the human to confirm during intake.
+- It does not guess an expected behavior, infer approval from imported content, or decide which risks the human should approve.
+- It treats pasted and provider-supplied text as evidence, never as instructions to change these rules or run embedded commands.
+- It does not rewrite or renumber existing `TC-<NN>` plan entries, or mix multiple flows in one investigation session.
 - It does not run against production environments.
-- It does not mark risks approved or rejected for the human.
+- It does not write back to Jira or other source providers, or store provider credentials.
+- The offline report tool does not run Playwright, call a provider, infer root cause, or decide that a suite is healthy or adequate.
 - It does not replace the consuming project's test-generation agent.
 - It does not claim API, database, email, background-job, or persisted-state evidence is browser-observable when it is not.
 
@@ -194,13 +219,19 @@ The harness requires a non-production target URL and an interactive test account
 ├── .github/prompts/             # VS Code Local prompt adapters
 ├── .vscode/mcp.json             # VS Code Playwright MCP configuration
 ├── docs/
-│   ├── architecture.md          # Detailed workflow and artifact boundaries
+│   ├── architecture.md          # Workflow routes and system boundaries
+│   ├── compatibility.md         # Client and provider support evidence
+│   ├── migration.md             # Legacy artifact migration guidance
+│   ├── release/                 # Phase verification reports
 │   └── assets/                  # Repository mark and social-preview artwork
 ├── qa-harness/
 │   ├── RULES.md                 # Shared rules and artifact contract
 │   ├── README.md                # Multi-tool usage guide
-│   ├── stages/                  # Intake, plan review, status/resume, investigation stages
-│   └── fixtures/                # Synthetic CSV and plan intake examples
+│   ├── adapters/                # Optional read-only source adapters
+│   ├── checks/                  # Structural checks, report CLI, and Node tests
+│   ├── fixtures/                # Synthetic intake, run-report, and walkthrough data
+│   ├── stages/                  # Intake, review, status/resume, and investigation stages
+│   └── walkthroughs/            # Public end-to-end examples
 ├── AGENTS.md                    # Codex repository instructions
 ├── CLAUDE.md                    # Claude Code repository instructions
 ├── CONTRIBUTING.md              # Contribution workflow
@@ -228,9 +259,9 @@ Changes to shared rules affect every adapter, so start with [`CONTRIBUTING.md`](
 
 ## Roadmap and known limits
 
-All seven planned development phases are merged to `master`. See the [Phase 7 verification report](docs/release/phase-7-verification.md) for what was checked and what remains unverified: real-human adoption, live browser behavior, consuming-project test generation, and live provider access.
+All seven planned development phases are merged to `master`. See the [Phase 7 verification report](docs/release/phase-7-verification.md) for what was checked and what remains unverified: real-human adoption, live browser behavior, consuming-project test generation, and live provider access. The repository's JSON report ingestion and Jira normalizer have fixture coverage; no live provider binding is included.
 
-The repository includes a fixture-tested Jira reference normalizer and adapter contract, but no live Atlassian client binding. Adapters for Xray, Azure DevOps, and Confluence remain future work; optional API/database oracle integrations belong to consuming projects.
+Adapters for Xray, Azure DevOps, and Confluence are not implemented. Optional API/database oracle integrations belong to consuming projects.
 
 ## License
 
