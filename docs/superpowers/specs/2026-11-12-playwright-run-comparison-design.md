@@ -78,12 +78,23 @@ supplies its mapped-file evidence. Source pointers remain visible as locators.
 The comparison must not infer matches from titles, file paths, current plans,
 or similar-looking test names.
 
+The current report producer may preserve an empty or null `tests[].projectName`
+while omitting it from `run.projectNames`. Include one anonymous project key in
+the comparison when either report has such a test. If a linked result joins to
+that anonymous key, preserve its status and source pointer but mark its
+evidence `ambiguous`; never compare anonymous results as if their project
+identity were known. Display this key as “unknown project” in Markdown.
+Optional run provenance fields `revision`, `capturedAt`, `startedAt`, and
+`source` must be absent, null, or strings before they are copied into output.
+
 ### Evidence and classifications
 
 Each output row represents a case ID and project name found in either report's
 stored plan-test or test-run evidence. Use the union of both reports' case IDs
 and project names; `run.projectNames` supplies each report's configured
-projects. For each side, preserve one of these states:
+projects, and an anonymous project key is added when the report's test list
+contains an empty or null project name. For each side, preserve one of these
+states:
 
 - `observed`: exactly one usable test-run link exists and supplies its stored
   status and source pointer.
@@ -92,7 +103,8 @@ projects. For each side, preserve one of these states:
 - `unmapped`: the report has no plan-test evidence for the case.
 - `project-not-included`: the report's run metadata does not list this project.
 - `ambiguous`: multiple conflicting mappings or multiple test-run links make
-  a single outcome unsafe to select.
+  a single outcome unsafe to select, including a uniquely linked result whose
+  project name is empty or null.
 
 For a case/project pair, use this precedence: project not included; case
 unmapped; mapping ambiguous; one observed test-run link; otherwise no result.

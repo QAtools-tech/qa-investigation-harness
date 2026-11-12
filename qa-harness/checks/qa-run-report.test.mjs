@@ -241,6 +241,34 @@ test("rejects malformed and unsupported saved reports without outputs", async (t
   const unsupported = invoke(compareArgs(inputs, { "--after": unsupportedPath }), paths.root);
   assert.equal(unsupported.status, 2);
   await assert.rejects(readFile(inputs.json));
+
+  const invalidMetadataPath = path.join(paths.root, "out", "invalid-metadata.json");
+  const invalidMetadata = storedRunReport({ runId: "invalid-metadata" });
+  invalidMetadata.run.revision = { unexpected: "object" };
+  await writeFile(invalidMetadataPath, JSON.stringify(invalidMetadata));
+  const invalidProvenance = invoke(compareArgs(inputs, { "--after": invalidMetadataPath }), paths.root);
+  assert.equal(invalidProvenance.status, 2);
+  await assert.rejects(readFile(inputs.json));
+});
+
+test("shows both evidence states and reasons in Markdown", async (t) => {
+  const paths = await workspace(t);
+  const inputs = await comparisonInputs(paths);
+  const before = JSON.parse(await readFile(inputs.before, "utf8"));
+  before.tests = [];
+  before.coverage.links = before.coverage.links.filter((link) => link.kind !== "test-run");
+  await writeFile(inputs.before, JSON.stringify(before));
+  const after = JSON.parse(await readFile(inputs.after, "utf8"));
+  after.coverage.links = after.coverage.links.filter((link) => link.kind !== "plan-test");
+  await writeFile(inputs.after, JSON.stringify(after));
+
+  const result = invoke(compareArgs(inputs), paths.root);
+  assert.equal(result.status, 0, result.stderr);
+  const markdown = await readFile(inputs.markdown, "utf8");
+  assert.match(markdown, /no-result/);
+  assert.match(markdown, /unmapped/);
+  assert.match(markdown, /mapped, but this project has no matching test-run result/);
+  assert.match(markdown, /No stored plan-test mapping exists for this case/);
 });
 
 test("protects both inputs and preserves paired-output semantics", async (t) => {
@@ -311,4 +339,45 @@ test("keeps attachment links relative to a nested Markdown report", async (t) =>
   assert.equal(result.status, 0, result.stderr);
   const markdown = await readFile(path.join(nested, "run.md"), "utf8");
   assert.match(markdown, /\.\.\/\.\.\/\.\.\/qa-artifacts\/CASE-300\/trace\.txt/);
+});
+
+test("compares reports produced with an unnamed project without losing the result", async (t) => {
+  const paths = await workspace(t);
+  const originalReport = JSON.parse(await readFile(paths.report, "utf8"));
+  const anonymousReport = structuredClone(originalReport);
+  anonymousReport.suites[0].suites[0].specs[0].tests[1].projectName = "";
+  await writeFile(paths.report, JSON.stringify(anonymousReport));
+  const beforeJson = path.join(paths.root, "out", "before-run.json");
+  const beforeMarkdown = path.join(paths.root, "out", "before-run.md");
+  const beforeResult = invoke(argsFor(paths, {
+    "--run-id": "before",
+    "--json-out": beforeJson,
+    "--markdown-out": beforeMarkdown,
+  }), paths.root);
+  assert.equal(beforeResult.status, 0, beforeResult.stderr);
+
+  await writeFile(paths.report, JSON.stringify(originalReport));
+  const afterJson = path.join(paths.root, "out", "after-run.json");
+  const afterMarkdown = path.join(paths.root, "out", "after-run.md");
+  const afterResult = invoke(argsFor(paths, {
+    "--run-id": "after",
+    "--json-out": afterJson,
+    "--markdown-out": afterMarkdown,
+  }), paths.root);
+  assert.equal(afterResult.status, 0, afterResult.stderr);
+
+  const inputs = {
+    root: paths.root,
+    before: beforeJson,
+    after: afterJson,
+    json: path.join(paths.root, "out", "comparison.json"),
+    markdown: path.join(paths.root, "out", "comparison.md"),
+  };
+  const compared = invoke(compareArgs(inputs), paths.root);
+  assert.equal(compared.status, 0, compared.stderr);
+  const comparison = JSON.parse(await readFile(inputs.json, "utf8"));
+  const anonymous = comparison.rows.find((row) => row.caseId === "TC-01" && row.projectName === "");
+  assert.equal(anonymous.before.evidence, "ambiguous");
+  assert.equal(anonymous.before.status, "failure");
+  assert.equal(anonymous.classification, "not comparable");
 });

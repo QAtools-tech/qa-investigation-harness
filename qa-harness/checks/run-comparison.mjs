@@ -27,11 +27,14 @@ function validateReport(report, label) {
   if (!object(report.run)) invalid(label, "run metadata");
   if (!text(report.run.runId)) invalid(label, "run ID");
   if (!text(report.run.target)) invalid(label, "target");
+  for (const field of ["revision", "capturedAt", "startedAt", "source"]) {
+    if (report.run[field] !== undefined && report.run[field] !== null && typeof report.run[field] !== "string") invalid(label, `run ${field}`);
+  }
   if (!Array.isArray(report.run.projectNames) || report.run.projectNames.some((name) => !text(name))) invalid(label, "project names");
   if (!Array.isArray(report.tests) || !object(report.coverage) || !Array.isArray(report.coverage.links)) invalid(label, "tests or coverage links");
 
   for (const item of report.tests) {
-    if (!object(item) || !text(item.sourcePointer) || !(item.projectName === null || text(item.projectName)) || !statuses.has(item.status)) {
+    if (!object(item) || !text(item.sourcePointer) || !(item.projectName === null || typeof item.projectName === "string") || !statuses.has(item.status)) {
       invalid(label, "test entry");
     }
   }
@@ -64,10 +67,20 @@ function signature(link, fields) {
   return JSON.stringify(fields.map((field) => link[field]));
 }
 
+function projectKey(name) {
+  return typeof name === "string" && name ? name : "";
+}
+
+function hasProject(report, projectName) {
+  return projectName === ""
+    ? report.tests.some((item) => projectKey(item.projectName) === "")
+    : report.run.projectNames.includes(projectName);
+}
+
 function sideEvidence(report, caseId, projectName) {
   const { links } = report.coverage;
   const result = { evidence: null, status: null, sourcePointer: null, mappedFile: null, reason: null };
-  if (!report.run.projectNames.includes(projectName)) {
+  if (!hasProject(report, projectName)) {
     result.evidence = "project-not-included";
     result.reason = "Project is not listed in this run's metadata.";
     return result;
@@ -99,7 +112,7 @@ function sideEvidence(report, caseId, projectName) {
       continue;
     }
     const item = matchedTests[0];
-    if (item.projectName === projectName) {
+    if (projectKey(item.projectName) === projectName) {
       if (item.status !== link.runStatus) ambiguousExecution = true;
       projectExecutions.push({ link, item });
     }
@@ -124,9 +137,14 @@ function sideEvidence(report, caseId, projectName) {
     return result;
   }
   const { link, item } = uniqueExecutions.values().next().value;
-  result.evidence = "observed";
   result.status = item.status;
   result.sourcePointer = link.toId;
+  if (projectName === "") {
+    result.evidence = "ambiguous";
+    result.reason = "The saved report has no project name, so this result cannot be safely aligned.";
+    return result;
+  }
+  result.evidence = "observed";
   return result;
 }
 
@@ -151,6 +169,7 @@ export function buildRunComparison(beforeReport, afterReport) {
   const cases = new Set();
   const projects = new Set([...before.run.projectNames, ...after.run.projectNames]);
   for (const report of [before, after]) {
+    if (report.tests.some((item) => projectKey(item.projectName) === "")) projects.add("");
     for (const link of report.coverage.links) {
       if (link.kind === "plan-test" || link.kind === "test-run") cases.add(link.fromId);
     }
@@ -166,7 +185,6 @@ export function buildRunComparison(beforeReport, afterReport) {
         before: beforeSide,
         after: afterSide,
         classification: classify(beforeSide, afterSide),
-        reason: beforeSide.reason || afterSide.reason || null,
       });
     }
   }

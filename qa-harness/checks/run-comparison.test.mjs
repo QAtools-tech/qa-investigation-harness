@@ -167,3 +167,27 @@ test("rejects malformed and unsupported run reports", async () => {
   assert.throws(() => buildRunComparison({ ...report({ runId: "before" }), schemaVersion: 1 }, report({ runId: "after" })), RunComparisonInputError);
   assert.throws(() => buildRunComparison({ ...report({ runId: "before" }), coverage: { links: [null] } }, report({ runId: "after" })), RunComparisonInputError);
 });
+
+test("rejects malformed optional run provenance fields", async () => {
+  const { buildRunComparison, RunComparisonInputError } = await import("./run-comparison.mjs");
+  for (const field of ["revision", "capturedAt", "startedAt", "source"]) {
+    const before = report({ runId: "before" });
+    before.run[field] = { unexpected: "object" };
+    assert.throws(() => buildRunComparison(before, report({ runId: "after" })), RunComparisonInputError, field);
+  }
+});
+
+test("preserves unnamed project results as ambiguous evidence", async () => {
+  const { buildRunComparison } = await import("./run-comparison.mjs");
+  for (const projectName of ["", null]) {
+    const comparison = buildRunComparison(
+      mappedReport({ runId: "before", projectName, projectNames: [] }),
+      mappedReport({ runId: "after", projectName: "chromium", projectNames: ["chromium"] }),
+    );
+    const row = comparison.rows.find((item) => item.projectName === "");
+    assert.equal(row.before.evidence, "ambiguous");
+    assert.equal(row.before.status, "expected");
+    assert.equal(row.before.sourcePointer, "/suites/0/tests/0");
+    assert.equal(row.classification, "not comparable");
+  }
+});
