@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { buildCoverage } from "./coverage-report.mjs";
 import { parsePlaywrightReport, PlaywrightReportError } from "./playwright-json.mjs";
 import { renderRunReport } from "./run-report-render.mjs";
+import { buildTraceabilityMatrix, renderTraceabilityMatrix } from "./traceability-matrix.mjs";
 
 const valueFlags = ["--report", "--root", "--investigation", "--run-id", "--target", "--revision", "--captured-at", "--json-out", "--markdown-out"];
 const requiredFlags = ["--report", "--root", "--investigation", "--run-id", "--target", "--json-out", "--markdown-out"];
@@ -13,7 +14,7 @@ class UsageError extends Error {}
 class InputError extends Error {}
 
 function usage() {
-  return "Usage: node qa-harness/checks/qa-run-report.mjs --report <file> --root <project> --investigation <id> --run-id <id> --target <name> --json-out <file> --markdown-out <file> [--revision <rev>] [--captured-at <ISO-time>] [--force]";
+  return "Usage: node qa-harness/checks/qa-run-report.mjs --report <file> --root <project> --investigation <id> --run-id <id> --target <name> --json-out <file> --markdown-out <file> [--revision <rev>] [--captured-at <ISO-time>] [--force]\n       node qa-harness/checks/qa-run-report.mjs matrix --root <project> --investigation <id> [--report <file> --run-id <id> --target <name> [--revision <rev>]] [--markdown-out <file> --csv-out <file>] [--force]";
 }
 
 export function parseArgs(argv) {
@@ -140,7 +141,47 @@ async function loadRun(reportPath, source) {
   }
 }
 
+async function matrixMain(argv) {
+  const allowed = new Set(["--root", "--investigation", "--markdown-out", "--csv-out", "--report", "--run-id", "--target", "--revision"]);
+  const values = new Map(); let force = false;
+  for (let i = 0; i < argv.length; i += 1) {
+    const key = argv[i];
+    if (key === "--force") { if (force) throw new UsageError("Duplicate flag --force."); force = true; continue; }
+    if (!allowed.has(key) || values.has(key) || !argv[i + 1] || argv[i + 1].startsWith("--")) throw new UsageError(`Invalid or duplicate matrix option ${key}.`);
+    values.set(key, argv[++i]);
+  }
+  for (const key of ["--root", "--investigation"]) if (!values.has(key)) throw new UsageError(`Missing required ${key}.`);
+  if (values.has("--markdown-out") !== values.has("--csv-out")) throw new UsageError("--markdown-out and --csv-out must be supplied together.");
+  const runKeys = ["--run-id", "--target", "--revision"].filter((key) => values.has(key));
+  if (values.has("--report") ? !values.has("--run-id") || !values.has("--target") : runKeys.length > 0) throw new UsageError("With --report, --run-id and --target are required; without --report, run metadata is not allowed.");
+  const root = path.resolve(values.get("--root"));
+  const rootReal = await realpath(root);
+  const outputs = values.has("--csv-out") ? await resolveOutputs(root, rootReal, values.get("--csv-out"), values.get("--markdown-out")) : null;
+  let run = null; let reportReal = null;
+  if (values.has("--report")) {
+    const report = path.resolve(values.get("--report"));
+    reportReal = await realpath(report).catch((error) => error.code === "ENOENT" ? report : Promise.reject(error));
+    if (outputs?.some((output) => path.resolve(output) === path.resolve(reportReal))) throw new InputError("Matrix outputs must not replace the input Playwright report.");
+    run = await loadRun(report, path.relative(root, report).split(path.sep).join("/") || path.basename(report));
+    run.metadata.runId = values.get("--run-id"); run.metadata.target = values.get("--target"); run.metadata.revision = values.get("--revision") ?? null;
+  }
+  const coverage = await buildCoverage(root, values.get("--investigation"), run, { includeMatrixEvidence: true });
+  const rendered = renderTraceabilityMatrix(buildTraceabilityMatrix(coverage, { selectedRun: run?.metadata ?? null }));
+  if (outputs) {
+    await writeOutputPair(outputs[0], outputs[1], rendered.csv, rendered.markdown, force);
+    process.stdout.write("Wrote CSV and Markdown traceability matrix.\n");
+  } else process.stdout.write(rendered.markdown);
+  return 0;
+}
+
 export async function main(argv = process.argv.slice(2)) {
+  if (argv[0] === "matrix") {
+    try { return await matrixMain(argv.slice(1)); }
+    catch (error) {
+      process.stderr.write(`${error.message}\n`);
+      return error instanceof UsageError || error instanceof InputError || error.message.includes("Invalid investigation ID") || error.message.includes("escapes") ? 2 : 3;
+    }
+  }
   let args;
   try {
     args = parseArgs(argv);
@@ -173,6 +214,13 @@ export async function main(argv = process.argv.slice(2)) {
   let run;
   let coverage;
   try {
+    const sourcePath = await realpath(reportPath).catch((error) => {
+      if (error.code === "ENOENT") return reportPath;
+      throw error;
+    });
+    if (outputPaths.some((output) => path.relative(sourcePath, output) === "")) {
+      throw new InputError("Report outputs must not replace the input Playwright report.");
+    }
     run = await loadRun(reportPath, path.relative(projectRoot, reportPath).split(path.sep).join("/") || path.basename(reportPath));
     coverage = await buildCoverage(projectRoot, values.get("--investigation"), run);
   } catch (error) {

@@ -40,6 +40,14 @@ missing, identify it before directing the human to their project's generator.
 Resume validation
 only when the stage prerequisites are met. Assertion mutation remains opt-in.
 
+For “Show the traceability matrix for <investigation-id>”, build a read-only
+matrix from the saved investigation, risks, plan, mappings, and validation
+artifacts. Present Markdown in chat by default. Include one selected Playwright
+report only when the user supplies it with its run ID and target; otherwise
+show execution as “no run selected”. Export Markdown or CSV only when asked.
+Keep decision freshness, mapping, per-project execution, and Stage 5 validation
+as separate fields; a passing run does not establish oracle conformance.
+
 ## Show the next action
 
 After a guided action, keep the stage's required preview or findings. Add a

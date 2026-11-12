@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -22,6 +23,7 @@ async function project(t, options = {}) {
   await mkdir(artifactDir, { recursive: true });
   await mkdir(path.join(root, "specs"), { recursive: true });
   await writeFile(path.join(artifactDir, "investigation.md"), investigation());
+  await writeFile(path.join(artifactDir, "flow-model.md"), `Modeled: ${options.modelDate ?? "2026-11-11"}\n`);
   await writeFile(path.join(artifactDir, "risks.md"), risks(options));
   await writeFile(path.join(root, "specs", `${id}.plan.md`), plan(options));
   if (options.createMappedFile !== false) {
@@ -69,8 +71,8 @@ function risks(options = {}) {
   const requirementColumn = options.requirementReference === false ? "" : "Requirement IDs";
   const headers = ["ID", "Step/State", "Risk", "Proposed oracle", "Observable", "Status", ...(requirementColumn ? [requirementColumn] : [])];
   const cells = ["R1", "Filter", "The list can be stale", "Only matching tasks are returned", "yes", "APPROVED", ...(requirementColumn ? ["C1"] : [])];
-  const dependency = options.dependency ?? "flow-model.md@2026-11-11";
-  const reviewed = options.reviewed ?? "R1 revision 1; Oracle: Only matching tasks are returned";
+  const dependency = options.dependency ?? `flow-model.md@sha256:${createHash("sha256").update("Modeled: 2026-11-11\n").digest("hex")}`;
+  const reviewed = options.reviewed ?? "Risk: The list can be stale; Oracle: Only matching tasks are returned";
   const mappedFile = options.mappedFile ?? "tests/filter.spec.ts";
   const duplicate = options.duplicateMapping ? `\n| R1 | TC-01 | ${mappedFile} |` : "";
   const extraMapping = options.extraMappingRows ?? "";
@@ -148,6 +150,22 @@ test("matches by normalized file and exact full title path when there is no TC t
   const result = await buildCoverage(root, id, report);
 
   assert.ok(result.links.some((link) => link.kind === "test-run" && link.status === "linked"));
+});
+
+test("a matching TC token in another file is unresolved", async (t) => {
+  const { root, id } = await project(t);
+  const result = await buildCoverage(root, id, run([{ file: "tests/other.spec.ts" }]));
+  assert.ok(!result.links.some((link) => link.kind === "test-run"));
+  assert.ok(result.unresolvedMappings.some((item) => item.reason === "report file differs from mapped file"));
+});
+
+test("compares the current model and requires every dependency to be comparable", async (t) => {
+  const changed = await project(t, { modelDate: "2026-11-12" });
+  const partial = await project(t, { dependency: `flow-model.md@sha256:${createHash("sha256").update("Modeled: 2026-11-11\n").digest("hex")}; investigation.md@revision-0` });
+  for (const [item, expected] of [[changed, "stale"], [partial, "unknown"]]) {
+    const result = await buildCoverage(item.root, item.id, run());
+    assert.equal(result.links.find((link) => link.kind === "risk-decision").freshness, expected);
+  }
 });
 
 test("normalizes both slash styles independent of the host path flavor", () => {
@@ -229,7 +247,10 @@ test("reports plan entries that have no generated mapping", { skip: !implemented
 });
 
 test("uses only an explicit TC-keyed human conformance record", { skip: !implemented }, async (t) => {
-  const validation = `# Validation\n\n| TC ID | Oracle conformance | Finding | Source locator |\n|---|---|---|---|\n| TC-01 | weak | Toast only; does not verify persisted state | tests/filter.spec.ts:42 |\n`;
+  const stage = await readFile(new URL("../stages/05-validate.md", import.meta.url), "utf8");
+  const header = stage.match(/^\| TC ID \|[^\r\n]+$/m)?.[0];
+  assert.ok(header, "Stage 5 must specify a TC-keyed validation table");
+  const validation = `# Validation\n\n${header}\n|---|---|---|---|\n| TC-01 | weak | Toast only; does not verify persisted state | tests/filter.spec.ts:42 |\n`;
   const { root, id } = await project(t, { validation });
   const result = await buildCoverage(root, id, run([{}]));
   const testRun = result.links.find((link) => link.kind === "test-run");

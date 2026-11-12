@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFile, realpath, stat } from "node:fs/promises";
 import path from "node:path";
 
@@ -190,45 +191,37 @@ function testTcIds(test) {
   return [...matches];
 }
 
-function dependencyFreshness(decision, risksText, risk) {
+function dependencyFreshness(decision, evidence) {
   const dependencies = decision.dependency.split(/[;,]+/).map((value) => value.trim()).filter(Boolean);
-  if (!dependencies.length) return "unknown";
-  const sourceMatch = risksText.match(/^Source:\s*(.+?)\s*\((\d{4}-\d{2}-\d{2})\)\s*$/im);
-  const riskRevision = risksText.match(new RegExp(`^${risk.id}[^\\n]*revision\\s+(\\d+)`, "im"))?.[1];
-  let compared = false;
+  let unknown = dependencies.length === 0;
   for (const dependency of dependencies) {
-    const match = dependency.match(/^(.+?)@(.+)$/);
-    if (!match) continue;
-    const dependencyFile = match[1].replaceAll("\\", "/").split("/").at(-1);
-    const dependencyRevision = match[2];
-    if (sourceMatch && dependencyFile === sourceMatch[1].replaceAll("\\", "/").split("/").at(-1)) {
-      compared = true;
-      if (dependencyRevision !== sourceMatch[2]) return "stale";
+    const [, file, revision] = dependency.match(/^([^@]+)@(.+)$/) ?? [];
+    const current = evidence.get(file);
+    if (current === undefined) {
+      unknown = true;
+      continue;
     }
-    if (/\d+/.test(dependencyRevision) && riskRevision && dependencyFile.toLowerCase().includes("risk")) {
-      compared = true;
-      if (dependencyRevision.match(/\d+/)?.[0] !== riskRevision) return "stale";
+    if (/^sha256:[a-f0-9]{64}$/i.test(revision)) {
+      if (createHash("sha256").update(current).digest("hex") !== revision.slice(7).toLowerCase()) return "stale";
+      continue;
     }
+    const date = file === "flow-model.md" ? current.match(/^Model(?:l)?ed:\s*(\d{4}-\d{2}-\d{2})[ \t]*$/im)?.[1] : null;
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(revision) && date !== revision) return "stale";
+    unknown = true;
   }
-  return compared ? "fresh" : "unknown";
+  return unknown ? "unknown" : "fresh";
 }
 
-function reviewedFreshness(decision, risk) {
+function combinedFreshness(decision, evidence, risk) {
+  const dependency = dependencyFreshness(decision, evidence);
+  const exactRisk = decision.reviewed.match(/(?:^|;\s*)Risk:\s*(.+?);\s*Oracle:/i)?.[1];
   const exactOracle = decision.reviewed.match(/(?:^|;\s*)Oracle:\s*(.+?)\s*$/i)?.[1];
-  if (exactOracle) return exactOracle.trim() === risk.oracle.trim() ? "fresh" : "stale";
-  const escapedRiskId = risk.id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const reviewedRevision = decision.reviewed.match(new RegExp(`\\b${escapedRiskId}\\s+revision\\s+([A-Za-z0-9._-]+)`, "i"))?.[1];
-  if (reviewedRevision && risk.revision) return reviewedRevision === risk.revision ? "fresh" : "stale";
-  return "unknown";
-}
-
-function combinedFreshness(decision, risksText, risk) {
-  const dependency = dependencyFreshness(decision, risksText, risk);
-  const reviewed = reviewedFreshness(decision, risk);
-  if (dependency === "stale" || reviewed === "stale") return "stale";
-  if ((dependency === "fresh" || dependency === "unknown") && reviewed === "fresh") return dependency === "fresh" ? "fresh" : "unknown";
-  if (dependency === "fresh" && reviewed === "unknown") return "unknown";
-  return "unknown";
+  const reviewedRevision = decision.reviewed.match(new RegExp(`\\b${risk.id}\\s+revision\\s+([A-Za-z0-9._-]+)`, "i"))?.[1];
+  if (dependency === "stale" || (exactRisk && exactRisk.trim() !== risk.text) ||
+      (exactOracle && exactOracle.trim() !== risk.oracle) ||
+      (reviewedRevision && risk.revision && reviewedRevision !== risk.revision)) return "stale";
+  const reviewed = (exactRisk && exactOracle) || (reviewedRevision && risk.revision);
+  return dependency === "fresh" && reviewed ? "fresh" : "unknown";
 }
 
 async function sourceFileExists(root, rootReal, mappedFile) {
@@ -265,7 +258,7 @@ function addGap(gaps, status, fromId, toId, sourceLocator, reason) {
 }
 
 /** Read one investigation and reconcile it to a normalized Playwright run. */
-export async function buildCoverage(rootDirectory, investigationId, run) {
+export async function buildCoverage(rootDirectory, investigationId, run, { includeMatrixEvidence = false } = {}) {
   if (typeof investigationId !== "string" || !localIdPattern.test(investigationId)) {
     throw new Error("Invalid investigation ID; use a safe local ID without path separators.");
   }
@@ -278,15 +271,22 @@ export async function buildCoverage(rootDirectory, investigationId, run) {
     throw new Error("Investigation ID resolves outside its expected artifact paths.");
   }
 
-  const [investigationFile, risksFile, validationFile, planFile] = await Promise.all([
+  const [investigationFile, risksFile, validationFile, planFile, modelFile, explorationFile] = await Promise.all([
     readOptionalEvidence(rootReal, root, path.join("qa-artifacts", investigationId, "investigation.md")),
     readOptionalEvidence(rootReal, root, path.join("qa-artifacts", investigationId, "risks.md")),
     readOptionalEvidence(rootReal, root, path.join("qa-artifacts", investigationId, "validation.md")),
     readOptionalEvidence(rootReal, root, path.join("specs", `${investigationId}.plan.md`)),
+    readOptionalEvidence(rootReal, root, path.join("qa-artifacts", investigationId, "flow-model.md")),
+    readOptionalEvidence(rootReal, root, path.join("qa-artifacts", investigationId, "exploration.md")),
   ]);
   const investigationContent = investigationFile?.text ?? "";
   const risksContent = risksFile?.text ?? "";
   const planContent = planFile?.text ?? "";
+  const decisionEvidence = new Map([
+    ["investigation.md", investigationFile?.text],
+    ["flow-model.md", modelFile?.text],
+    ["exploration.md", explorationFile?.text],
+  ]);
   const investigationLocator = `qa-artifacts/${investigationId}/investigation.md`;
   const risksLocator = `qa-artifacts/${investigationId}/risks.md`;
   const planLocator = `specs/${investigationId}.plan.md`;
@@ -342,9 +342,9 @@ export async function buildCoverage(rootDirectory, investigationId, run) {
       links.push({ kind: "risk-decision", status: "unresolved", fromId: risk.id, toId: null, sourceLocator: risk.locator, reason: item.reason });
     } else {
       const decision = riskDecisions[0];
-      const freshness = combinedFreshness(decision, risksContent, risk);
+      const freshness = combinedFreshness(decision, decisionEvidence, risk);
       links.push({ kind: "risk-decision", status: freshness === "fresh" ? "linked" : freshness, fromId: risk.id, toId: decision.id, decision: decision.decision, sourceLocator: risk.locator, targetLocator: decision.locator, freshness });
-      if (freshness === "stale") addGap(gaps, "stale", risk.id, decision.id, decision.locator, "A recorded decision dependency revision differs from the current risk source revision.");
+      if (freshness === "stale") addGap(gaps, "stale", risk.id, decision.id, decision.locator, "The reviewed risk, oracle, or dependency differs from current evidence.");
       else if (freshness === "unknown") addGap(gaps, "unknown freshness", risk.id, decision.id, decision.locator, "Decision freshness could not be compared from recorded revisions.");
     }
   }
@@ -379,7 +379,7 @@ export async function buildCoverage(rootDirectory, investigationId, run) {
 
   const matchedTestsByMapping = new Map(mappings.map((_, index) => [index, []]));
   const ambiguousMappingIndexes = new Set();
-  for (const reportTest of run.tests ?? []) {
+  for (const reportTest of run?.tests ?? []) {
     const ids = testTcIds(reportTest);
     const exactIdMappings = mappings
       .map((mapping, index) => ({ mapping, index }))
@@ -404,7 +404,15 @@ export async function buildCoverage(rootDirectory, investigationId, run) {
         unresolvedMappings.push({ testLocator: reportTest.sourcePointer, tcId: ids[0], reason: "multiple mapping targets" });
         addGap(gaps, "unresolved", ids[0], null, reportTest.sourcePointer, "One TC identifier references multiple generated mapping rows.");
       } else {
-        matchedTestsByMapping.get(exactIdMappings[0].index).push(reportTest);
+        const { index, mapping } = exactIdMappings[0];
+        const file = normalizeRelativeFile(root, reportTest.file);
+        if (file && file === normalizeRelativeFile(root, mapping.file)) {
+          matchedTestsByMapping.get(index).push(reportTest);
+        } else {
+          const reason = "report file differs from mapped file";
+          unresolvedMappings.push({ testLocator: reportTest.sourcePointer, tcId: ids[0], reason });
+          addGap(gaps, "unresolved", ids[0], mapping.file, reportTest.sourcePointer, reason);
+        }
       }
       continue;
     }
@@ -463,6 +471,7 @@ export async function buildCoverage(rootDirectory, investigationId, run) {
     if (!fileExists) addGap(gaps, "missing test", mapping.tcId, mapping.file, mapping.locator, "Mapped test source file does not exist under the project root.");
     if (ambiguousMappingIndexes.has(mappingIndex)) continue;
     const candidates = matchedTestsByMapping.get(mappingIndex) ?? [];
+    if (!run) continue;
     if (candidates.length === 0) {
       addGap(gaps, fileExists ? "missing execution evidence" : "missing test", mapping.tcId, mapping.file, mapping.locator, fileExists ? "The mapped test file exists but no matching test appears in the selected run." : "The mapped test file and matching run result are absent.");
       continue;
@@ -506,5 +515,6 @@ export async function buildCoverage(rootDirectory, investigationId, run) {
     orphanTests,
     unresolvedMappings,
     gaps,
+    ...(includeMatrixEvidence ? { evidence: { requirements, risks, decisions, mappings, plans, findings, matchedTestsByMapping: Object.fromEntries([...matchedTestsByMapping].map(([index, tests]) => [index, tests])), ambiguousMappingIndexes: [...ambiguousMappingIndexes] } } : {}),
   };
 }

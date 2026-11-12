@@ -156,8 +156,11 @@ human-confirmed recovery entries:
 
 This mapping is what the validate stage uses later to connect an approved
 risk to the test that's supposed to cover it. If Part B is run more than
-once for this ticket, append a new dated "## Generated mapping" section each
-time rather than overwriting the previous one.
+once for this ticket, use one mapping section per date. For a later export on
+the same date, append only the new rows to that date's existing mapping table.
+For a new date, append a new dated "## Generated mapping" section. Keep every
+prior row and apply the existing mapping reconciliation rules before writing.
+If more than one section already has that date, stop for reconciliation.
 
 Rules:
 - Include APPROVED rows only. Ignore PROPOSED and REJECTED entirely, however
