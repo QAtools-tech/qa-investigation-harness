@@ -40,12 +40,19 @@ test("normalizes nested suites, projects, source locations, attempts, and catego
   assert.equal(normalized.tests[0].attempts[0].duration, 120);
   assert.equal(normalized.tests[0].attempts[0].retry, 0);
   assert.equal(normalized.tests[0].attempts[0].startTime, "2026-11-11T10:00:01.000Z");
+  assert.deepEqual(normalized.tests[0].attempts[0].attachments, [
+    { name: "private", contentType: "text/plain", candidatePath: null },
+  ]);
   assert.equal(normalized.tests[0].sourcePointer, "/suites/0/suites/0/specs/0/tests/0");
   assert.equal(normalized.tests[1].status, "failure");
   assert.equal(normalized.tests[2].status, "skipped");
   assert.equal(normalized.tests[3].status, "flaky");
   assert.deepEqual(normalized.tests[3].attempts.map((attempt) => attempt.status), ["failed", "passed"]);
   assert.deepEqual(normalized.tests[3].attempts.map((attempt) => attempt.retry), [0, 1]);
+  assert.deepEqual(normalized.tests[3].attempts.map((attempt) => attempt.attachments), [
+    [{ name: "retry-trace", contentType: "application/zip", candidatePath: "test-results/TC-02/trace.zip" }],
+    [],
+  ]);
   assert.equal(JSON.stringify(normalized).includes("must not be copied"), false);
   assert.equal(JSON.stringify(normalized).includes("fixture failure detail"), false);
 });

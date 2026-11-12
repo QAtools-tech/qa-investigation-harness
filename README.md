@@ -42,7 +42,7 @@ investigation ID + case, spec, or run
 - **Read-only status and resume** — reports completed work, blockers, missing evidence, and one next action from artifacts on disk; resume follows the same resolver.
 - **Local source intake and plan review** — previews pasted, Markdown, and CSV evidence with locators and provenance, then writes only after human confirmation; reviews existing plans directly without editing them.
 - **Optional source adapters** — a versioned read-only contract and fixture-tested Jira issue normalizer preserve project scope, locators, revisions, and bounded excerpts; manual intake remains available without a connected provider.
-- **Offline Playwright report ingestion and coverage** — reads an existing JSON reporter file without running Playwright, then produces Markdown/JSON triage and coverage reports linked to investigation artifacts. Missing and ambiguous links stay visible; a run result does not prove the oracle or its root cause.
+- **Offline Playwright report ingestion and coverage** — reads an existing JSON reporter file without running Playwright, then produces Markdown/JSON triage and coverage reports linked to investigation artifacts. Failure triage can link to file-backed attachments that resolve inside the project root; attachment contents are never read or copied. Missing and ambiguous links stay visible; a run result does not prove the oracle or its root cause.
 - **Focused review and deterministic checks** — bounded risk/validation reviewers return cited findings; structural artifact and Markdown-link checks plus the built-in Node suite run locally and in CI, with an opt-in Codex hook for artifact diagnostics.
 
 ## How the workflow works
@@ -101,7 +101,7 @@ Each flow is identified by an existing ticket ID or a local investigation ID:
 | External generator | The plan file and the consuming project's test setup | Generated test files in that project |
 | Validate | Current approvals, mapping, plan, and mapped test source | `qa-artifacts/<id>/validation.md`; optional assertion mutation is explicit and restored |
 | Triage | Identifiable failure or run evidence | Observed failure, separate possible causes, and missing context |
-| Offline run report | Existing Playwright JSON report, investigation artifacts, run ID, and target | `qa-artifacts/<id>/run-report.json` and `qa-artifacts/<id>/run-report.md` with coverage links and failure triage |
+| Offline run report | Existing Playwright JSON report, investigation artifacts, run ID, and target | `qa-artifacts/<id>/run-report.json` and `qa-artifacts/<id>/run-report.md` with coverage links, failure triage, and safe in-root attachment links |
 
 The `qa-artifacts/` and `specs/` directories are generated workflow output and are intentionally ignored by default. This repository documents and validates the process; it does not publish real investigation findings.
 

@@ -79,7 +79,7 @@ test("renders JSON and Markdown with coverage, run provenance, raw counts, and l
   ]);
   const result = renderRunReport(normalized, coverage);
 
-  assert.equal(result.json.schemaVersion, 1);
+  assert.equal(result.json.schemaVersion, 2);
   assert.equal(result.json.investigationId, "CASE-300");
   assert.equal(result.json.run.runId, "run-17");
   assert.equal(result.json.run.target, "staging");
@@ -96,6 +96,98 @@ test("renders JSON and Markdown with coverage, run provenance, raw counts, and l
   assert.match(result.markdown, /TC-404/);
   assert.match(result.markdown, /not-reviewed/);
   assert.match(result.markdown, /does not verify an oracle/i);
+});
+
+test("renders safe per-attempt attachment links and strips candidate paths and bodies", { skip: !implemented }, () => {
+  const normalized = run([{
+    ...testResult({ title: "TC-01 attachment evidence", status: "failure", order: 0 }),
+    attempts: [{
+      status: "failed",
+      duration: 100,
+      retry: 0,
+      startTime: "2026-11-11T10:00:00Z",
+      attachments: [{
+        name: "trace ] [review](https://evil.example).zip",
+        contentType: "application/zip",
+        path: "test-results/trace [x] (1)#?.zip",
+        availability: "available",
+        candidatePath: "C:/private/trace.zip",
+        body: "attachment secret",
+      }],
+    }],
+  }]);
+  const result = renderRunReport(normalized, coverage, { attachmentLinkPrefix: "../.." });
+  const outputAttachment = result.json.tests[0].attempts[0].attachments[0];
+
+  assert.deepEqual(outputAttachment, {
+    name: "trace ] [review](https://evil.example).zip",
+    contentType: "application/zip",
+    path: "test-results/trace [x] (1)#?.zip",
+    availability: "available",
+  });
+  assert.match(result.markdown, /trace.*trace%20%5Bx%5D%20%281%29%23%3F\.zip/);
+  assert.equal(JSON.stringify(result.json).includes("C:/private/trace.zip"), false);
+  assert.equal(JSON.stringify(result.json).includes("attachment secret"), false);
+  assert.match(result.markdown, /retry 0/);
+});
+
+test("renders unavailable attachments without exposing a link path", { skip: !implemented }, () => {
+  const normalized = run([{
+    ...testResult({ title: "TC-02 unavailable attachment", status: "failure" }),
+    attempts: [{
+      status: "failed",
+      duration: 50,
+      retry: 0,
+      startTime: null,
+      attachments: [{ name: "outside trace", contentType: "application/zip", path: null, availability: "unavailable" }],
+    }],
+  }]);
+  const result = renderRunReport(normalized, coverage);
+
+  assert.equal(result.json.tests[0].attempts[0].attachments[0].path, null);
+  assert.match(result.markdown, /outside trace.*unavailable/i);
+  assert.doesNotMatch(result.markdown, /\[outside trace/);
+});
+
+test("preserves a validated attachment path without text sanitization", { skip: !implemented }, () => {
+  const validatedPath = "test-results/trace\u0001/evidence.zip";
+  const normalized = run([{
+    ...testResult({ title: "TC-03 unusual valid path", status: "failure" }),
+    attempts: [{
+      status: "failed",
+      duration: 50,
+      retry: 0,
+      startTime: null,
+      attachments: [{ name: "trace", contentType: "application/zip", path: validatedPath, availability: "available" }],
+    }],
+  }]);
+  const result = renderRunReport(normalized, coverage);
+
+  assert.equal(result.json.tests[0].attempts[0].attachments[0].path, validatedPath);
+  assert.ok(result.markdown.includes("test-results/trace%01/evidence.zip"));
+});
+
+test("contains bare carriage returns in attachment names and content types", { skip: !implemented }, () => {
+  const normalized = run([{
+    ...testResult({ title: "TC-04 carriage-return metadata", status: "failure" }),
+    attempts: [{
+      status: "failed",
+      duration: 50,
+      retry: 0,
+      startTime: null,
+      attachments: [{
+        name: "trace\r\r- FORGED ROW",
+        contentType: "image/png\r\r- FORGED TYPE",
+        path: null,
+        availability: "unavailable",
+      }],
+    }],
+  }]);
+  const result = renderRunReport(normalized, coverage);
+
+  assert.equal(result.markdown.includes("\r"), false);
+  assert.match(result.markdown, /trace - FORGED ROW \(image\/png - FORGED TYPE; file unavailable\)/);
+  assert.doesNotMatch(result.markdown, /^\s*- FORGED (ROW|TYPE)$/m);
 });
 
 test("renders orphan tests, per-test outcomes, conformance findings, and retry timelines in Markdown", { skip: !implemented }, () => {

@@ -77,6 +77,29 @@ test("writes JSON and Markdown reports and treats source failures as data", asyn
   assert.match(markdown, /failure/);
 });
 
+test("writes reports while omitting an attachment path outside the project root", async (t) => {
+  const paths = await workspace(t);
+  const outside = path.join(path.dirname(paths.root), `outside-${path.basename(paths.root)}.zip`);
+  t.after(() => rm(outside, { force: true }));
+  await writeFile(outside, "synthetic outside file");
+  const reportInput = JSON.parse(await readFile(paths.report, "utf8"));
+  reportInput.suites[0].suites[0].specs[0].tests[0].results[0].attachments = [
+    { name: "outside trace", contentType: "application/zip", path: outside, body: "must not be copied" },
+  ];
+  await writeFile(paths.report, JSON.stringify(reportInput));
+
+  const result = invoke(argsFor(paths), paths.root);
+
+  assert.equal(result.status, 0, result.stderr);
+  const report = JSON.parse(await readFile(paths.json, "utf8"));
+  const markdown = await readFile(paths.markdown, "utf8");
+  assert.equal(report.tests[0].attempts[0].attachments[0].availability, "unavailable");
+  assert.equal(report.tests[0].attempts[0].attachments[0].path, null);
+  assert.equal(JSON.stringify(report).includes(outside), false);
+  assert.equal(JSON.stringify(report).includes("must not be copied"), false);
+  assert.equal(markdown.includes(outside), false);
+});
+
 test("preserves existing outputs unless force is set", async (t) => {
   const paths = await workspace(t);
   await writeFile(paths.json, "keep-json");

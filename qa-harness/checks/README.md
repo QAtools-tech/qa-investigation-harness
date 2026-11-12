@@ -90,7 +90,14 @@ is `not-reviewed` unless a Stage 5 validation row includes the TC ID, finding,
 and source locator.
 
 The JSON and Markdown reports retain normalized result references and raw
-runner outcome categories, not full attachments, stdout, or error payloads.
+runner outcome categories, not attachment bodies, stdout, or error payloads.
+For file-backed attachments, JSON records the bounded name and content type
+plus a project-relative path only when it resolves to an existing regular
+file inside the selected project root. Markdown links to that path relative
+to the report output. Missing, body-only, invalid, and outside-root paths are
+shown as unavailable without exposing the original path. Run-report JSON uses
+schema version `2`.
+
 Runner status does not verify an oracle. The report does not label a run,
 test, or suite healthy or adequate, and does not infer a failure's root cause.
 Possible causes remain empty until a human supplies a cited hypothesis.

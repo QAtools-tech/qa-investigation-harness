@@ -15,7 +15,7 @@ function boundedText(value, limit = 2000) {
 }
 
 function markdownText(value) {
-  const text = boundedText(String(value ?? "—")).replace(/\r?\n/g, " ");
+  const text = boundedText(String(value ?? "—")).replace(/[\r\n]+/g, " ");
   return text
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -44,6 +44,14 @@ export function buildTriage(run, coverage) {
           duration: attempt.duration,
           retry: attempt.retry,
           startTime: attempt.startTime,
+          attachments: (attempt.attachments ?? []).map((attachment) => ({
+            name: boundedText(attachment.name ?? "Attachment", 500),
+            contentType: boundedText(attachment.contentType ?? "", 200) || null,
+            path: attachment.availability === "available" && typeof attachment.path === "string"
+              ? attachment.path
+              : null,
+            availability: attachment.availability === "available" && typeof attachment.path === "string" ? "available" : "unavailable",
+          })),
         })),
         source: {
           file: boundedText(test.file ?? "", 2000),
@@ -59,7 +67,16 @@ export function buildTriage(run, coverage) {
     .map(({ timelineStart, ...entry }) => entry);
 }
 
-function markdownReport(json) {
+function encodePathSegment(value) {
+  return encodeURIComponent(value).replace(/[!'()*]/g, (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`);
+}
+
+function attachmentUrl(prefix, filePath) {
+  const segments = [prefix, filePath].filter(Boolean).flatMap((value) => value.split("/")).filter(Boolean);
+  return segments.map(encodePathSegment).join("/");
+}
+
+function markdownReport(json, attachmentLinkPrefix) {
   const lines = [
     `# Playwright run report: ${markdownText(json.run.runId ?? "unknown run")}`,
     "",
@@ -111,7 +128,18 @@ function markdownReport(json) {
     ...(json.triage.length
       ? json.triage.map((entry) => {
         const attempts = entry.observed.attempts.map((attempt) => `retry ${attempt.retry}: ${attempt.status}${attempt.duration === null ? "" : ` (${attempt.duration} ms)`}`).join(", ") || "no attempt detail";
-        return `- **${markdownText(entry.observed.status)}** ${markdownText(entry.titlePath.join(" › "))} — ${markdownText(entry.projectName)}; observed at ${markdownText(entry.observed.source.file)}:${markdownText(entry.observed.source.line)} (${markdownText(entry.observed.source.reportPointer)}); attempts: ${markdownText(attempts)}. Possible causes: none recorded.`;
+        const lines = [`- **${markdownText(entry.observed.status)}** ${markdownText(entry.titlePath.join(" › "))} — ${markdownText(entry.projectName)}; observed at ${markdownText(entry.observed.source.file)}:${markdownText(entry.observed.source.line)} (${markdownText(entry.observed.source.reportPointer)}); attempts: ${markdownText(attempts)}. Possible causes: none recorded.`];
+        for (const attempt of entry.observed.attempts) {
+          for (const attachment of attempt.attachments ?? []) {
+            const name = markdownText(attachment.name || "Attachment");
+            const contentType = markdownText(attachment.contentType || "unknown type");
+            const reference = attachment.path && attachment.availability === "available"
+              ? `[${name}](${attachmentUrl(attachmentLinkPrefix, attachment.path)}) (${contentType})`
+              : `${name} (${contentType}; file unavailable)`;
+            lines.push(`  - retry ${markdownText(attempt.retry)}: ${reference}`);
+          }
+        }
+        return lines.join("\n");
       })
       : ["- No failure or flaky execution entries were reported."]),
     "",
@@ -123,12 +151,23 @@ function markdownReport(json) {
   return lines.join("\n");
 }
 
-export function renderRunReport(run, coverage) {
+export function renderRunReport(run, coverage, { attachmentLinkPrefix = "" } = {}) {
   const normalizedTests = (run.tests ?? []).map((test) => ({
     ...test,
     status: statuses.includes(test.status) ? test.status : "unknown",
     titlePath: (test.titlePath ?? []).map((part) => boundedText(part, 500)),
     file: boundedText(test.file ?? "", 2000),
+    attempts: (test.attempts ?? []).map((attempt) => ({
+      ...attempt,
+      attachments: (attempt.attachments ?? []).map((attachment) => ({
+        name: boundedText(attachment.name ?? "Attachment", 500),
+        contentType: boundedText(attachment.contentType ?? "", 200) || null,
+        path: attachment.availability === "available" && typeof attachment.path === "string"
+          ? attachment.path
+          : null,
+        availability: attachment.availability === "available" && typeof attachment.path === "string" ? "available" : "unavailable",
+      })),
+    })),
   }));
   const safeRun = {
     runId: boundedText(run.metadata?.runId ?? "", 500) || null,
@@ -141,7 +180,7 @@ export function renderRunReport(run, coverage) {
   };
   const triage = buildTriage({ tests: normalizedTests }, coverage);
   const json = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     investigationId: coverage.investigationId,
     run: safeRun,
     outcomeCounts: countOutcomes(normalizedTests),
@@ -159,5 +198,5 @@ export function renderRunReport(run, coverage) {
       "Possible causes are hypotheses and none were supplied by a human reviewer.",
     ],
   };
-  return { json, markdown: markdownReport(json) };
+  return { json, markdown: markdownReport(json, attachmentLinkPrefix) };
 }

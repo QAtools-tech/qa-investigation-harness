@@ -29,7 +29,7 @@
                       "duration": 120,
                       "retry": 0,
                       "startTime": "2026-11-11T10:00:01.000Z",
-                      "attachments": [{ "name": "private", "body": "must not be copied" }],
+                      "attachments": [{ "name": "private", "contentType": "text/plain", "body": "must not be copied" }],
                       "stdout": [{ "text": "must not be copied" }]
                     }
                   ]
@@ -72,7 +72,7 @@
                   "expectedStatus": "passed",
                   "status": "flaky",
                   "results": [
-                    { "status": "failed", "duration": 80, "retry": 0 },
+                    { "status": "failed", "duration": 80, "retry": 0, "attachments": [{ "name": "retry-trace", "contentType": "application/zip", "path": "test-results/TC-02/trace.zip", "body": "must not be copied" }] },
                     { "status": "passed", "duration": 95, "retry": 1 }
                   ]
                 }
