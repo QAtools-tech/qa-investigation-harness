@@ -208,12 +208,13 @@ test("compares two saved harness run reports", async (t) => {
   assert.equal(result.status, 0, result.stderr);
   const comparison = JSON.parse(await readFile(inputs.json, "utf8"));
   const markdown = await readFile(inputs.markdown, "utf8");
-  assert.equal(comparison.schemaVersion, 1);
+  assert.equal(comparison.schemaVersion, 2);
   assert.equal(comparison.investigationId, "CASE-300");
   assert.equal(comparison.before.runId, "before");
   assert.equal(comparison.after.runId, "after");
   assert.equal(comparison.rows[0].classification, "regressed");
   assert.match(markdown, /regressed/);
+  assert.match(markdown, /\| Next action \|/);
 });
 
 test("rejects saved reports with different targets or investigations", async (t) => {
@@ -269,6 +270,7 @@ test("shows both evidence states and reasons in Markdown", async (t) => {
   assert.match(markdown, /unmapped/);
   assert.match(markdown, /mapped, but this project has no matching test-run result/);
   assert.match(markdown, /No stored plan-test mapping exists for this case/);
+  assert.match(markdown, /Resolve the test mapping, then produce fresh reports for both runs/);
 });
 
 test("rejects malformed coverage link kinds without writing outputs", async (t) => {
