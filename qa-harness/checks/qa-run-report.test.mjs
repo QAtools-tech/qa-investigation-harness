@@ -93,6 +93,15 @@ test("preserves existing outputs unless force is set", async (t) => {
   assert.notEqual(await readFile(paths.markdown, "utf8"), "keep-markdown");
 });
 
+test("force cannot replace the source report", async (t) => {
+  const paths = await workspace(t);
+  const before = await readFile(paths.report, "utf8");
+  const result = invoke(argsFor(paths, { "--json-out": paths.report, "--force": true }), paths.root);
+  assert.equal(result.status, 2, result.stderr);
+  assert.equal(await readFile(paths.report, "utf8"), before);
+  await assert.rejects(readFile(paths.markdown));
+});
+
 test("rejects output paths outside the selected project root", async (t) => {
   const paths = await workspace(t);
   const outside = path.join(path.dirname(paths.root), `outside-${path.basename(paths.root)}.json`);

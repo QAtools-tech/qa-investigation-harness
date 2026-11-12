@@ -173,6 +173,13 @@ export async function main(argv = process.argv.slice(2)) {
   let run;
   let coverage;
   try {
+    const sourcePath = await realpath(reportPath).catch((error) => {
+      if (error.code === "ENOENT") return reportPath;
+      throw error;
+    });
+    if (outputPaths.some((output) => path.relative(sourcePath, output) === "")) {
+      throw new InputError("Report outputs must not replace the input Playwright report.");
+    }
     run = await loadRun(reportPath, path.relative(projectRoot, reportPath).split(path.sep).join("/") || path.basename(reportPath));
     coverage = await buildCoverage(projectRoot, values.get("--investigation"), run);
   } catch (error) {

@@ -155,7 +155,7 @@ export function renderRunReport(run, coverage) {
     triage,
     limitations: [
       "Runner status does not verify an oracle.",
-      "Oracle conformance remains not-reviewed unless an explicit human-authored finding with a source locator is recorded.",
+      "Oracle conformance remains not-reviewed unless an explicit validation finding with a source locator is recorded.",
       "Possible causes are hypotheses and none were supplied by a human reviewer.",
     ],
   };

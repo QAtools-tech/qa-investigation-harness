@@ -77,13 +77,17 @@ problems; `3` means an output or operational I/O error.
 
 Coverage uses exact case/requirement references, risk decision records,
 generated mappings, and plan TC headings. A reported title may link by a
-standalone `TC-<digits>` token or by exact complete title path and mapped file.
+standalone `TC-<digits>` token or by exact complete title path. Both require
+the run test file to match the mapped file.
 Ambiguous and missing links remain visible. Requirement-to-risk coverage is
 only linked when a risk row has an explicit `Requirement IDs` column reference;
-the tool does not infer links from similar prose. Decision freshness is stale
-only when recorded dependency revisions can be compared and differ; otherwise
-it is reported unknown. Human conformance is `not-reviewed` unless a structured
-TC-keyed validation row includes a finding and source locator.
+the tool does not infer links from similar prose. Freshness requires a match
+for the reviewed risk and oracle and every recorded dependency. The report
+can compare `filename@sha256:<digest>` for the current investigation, flow
+model, and exploration files. A differing flow-model date can establish
+staleness, while a matching date alone leaves freshness unknown. Conformance
+is `not-reviewed` unless a Stage 5 validation row includes the TC ID, finding,
+and source locator.
 
 The JSON and Markdown reports retain normalized result references and raw
 runner outcome categories, not full attachments, stdout, or error payloads.

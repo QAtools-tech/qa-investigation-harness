@@ -31,10 +31,14 @@ mapping is unresolved. The parent reconciles findings and writes the artifact;
 the reviewer never edits files or decides approval. If the client cannot
 enforce read-only tools, use the shared instructions directly in the parent.
 
-For each row in the mapping, find the corresponding test in the spec file and
-record:
+For each row in the mapping, find the corresponding test in the spec file.
+For each conformance judgment, record the risk ID, quoted assertion, and
+reason in Finding. Cite the inspected test file and line in Source locator.
 
-| Risk ID | TC ID | Test found? | Assertion (quoted) | Implements the approved oracle from risks.md? |
+| TC ID | Oracle conformance | Finding | Source locator |
+
+Use `conforms`, `weak`, or `does-not-conform` for recorded judgments. Report
+missing tests and blocked judgments separately with their mapping locator.
 
 Flag any row where:
 - no test exists at the mapped file, or no test in it matches the TC ID/title

@@ -32,8 +32,9 @@ investigation per session, including when resuming from a new chat.
    missing dependency. Keep unaffected decisions visible. If dependency links
    are absent, request review of the affected scope. An imported `APPROVED`
    label is a source claim, not a human decision by this harness.
-5. If there are multiple generated mapping sections, use the latest clearly
-   dated section. If dates tie, conflict, or cannot be parsed, stop and name
+5. Read all generated mapping sections to retain earlier entries and determine
+   the current mapping. New exports add rows to the existing section for the
+   same date. If section dates tie, conflict, or cannot be parsed, stop and name
    the mapping sections that need review. A plan without a matching mapping
    does not establish an approved handoff. A plan and mapping do not establish
    that a generator produced tests.
