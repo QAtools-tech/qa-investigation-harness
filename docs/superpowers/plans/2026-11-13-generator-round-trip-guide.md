@@ -24,7 +24,7 @@
 - The read-only `handoff` summary may classify an absent generated file as blocked; explain when that is the expected external-generator handoff state and preserve status/resume as the authority for approval blockers.
 - A Playwright report with an unknown run ID, target, or revision must leave that provenance unknown; examples must not invent values.
 - An imported test result with no oracle validation must remain unreviewed; the guide must route to Stage 5 without treating runner success as conformance.
-- A report or output path outside the selected root must not be encouraged; examples must respect the CLI's root and existing-parent requirements.
+- A Playwright report input may be anywhere the caller can read it; JSON/Markdown outputs must be inside the selected root and their parent directory must exist. Since output arguments resolve from the current working directory, examples run from the harness checkout must use absolute output paths under the consuming-project root.
 - The guide must stop at external generator and Playwright execution boundaries; no command should imply harness-owned execution.
 
 ---

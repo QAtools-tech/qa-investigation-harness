@@ -21,8 +21,11 @@ are recorded in `qa-artifacts/<id>/risks.md`.
 From the harness checkout, print the read-only handoff summary:
 
 ```sh
-node qa-harness/checks/qa-run-report.mjs handoff --root <project-root> --investigation CASE-300
+node qa-harness/checks/qa-run-report.mjs handoff --root "/path/to/consuming-project" --investigation CASE-300
 ```
+
+Replace the example path with the consuming project's absolute path in your
+shell's native format.
 
 The summary separates ready and blocked cases. It writes no artifact. If a
 case is blocked by stale approval or a plan/mapping mismatch, stop for human
@@ -41,11 +44,14 @@ test code.
 ## 2. Confirm generated source matches the mapping
 
 After the generator finishes, check the mapped files from the consuming
-project root:
+project root. From the harness checkout, run the matrix against that project:
 
 ```sh
-node qa-harness/checks/qa-run-report.mjs matrix --root <project-root> --investigation CASE-300
+node qa-harness/checks/qa-run-report.mjs matrix --root "/path/to/consuming-project" --investigation CASE-300
 ```
+
+Replace the example path with the consuming project's absolute path in your
+shell's native format.
 
 The matrix checks mapped paths and reports missing or ambiguous mappings. A
 plan or mapping alone does not prove that a test file was generated. If the
@@ -69,24 +75,32 @@ From the harness checkout, import the existing Playwright JSON report. Set
 `--root` to the consuming project root, which contains `qa-artifacts/`,
 `specs/`, and the mapped tests. The report input can be at another readable
 path; output files must stay inside the selected root and their parent
-directories must already exist.
+directories must already exist. The CLI resolves output arguments from the
+current working directory, not from `--root`, so use absolute output paths
+under the consuming project root when running it from a separate harness
+checkout. Quote paths if they contain spaces.
 
 ```sh
 node qa-harness/checks/qa-run-report.mjs \
-  --report <playwright-report.json> \
-  --root <project-root> \
+  --report "/path/to/consuming-project/test-results/report.json" \
+  --root "/path/to/consuming-project" \
   --investigation CASE-300 \
   --run-id build-184 \
   --target staging \
-  --json-out qa-artifacts/CASE-300/run-build-184.json \
-  --markdown-out qa-artifacts/CASE-300/run-build-184.md
+  --json-out "/path/to/consuming-project/qa-artifacts/CASE-300/run-build-184.json" \
+  --markdown-out "/path/to/consuming-project/qa-artifacts/CASE-300/run-build-184.md"
 ```
+
+Replace each `/path/to/consuming-project` with the actual absolute path. The
+input report may instead use any path the caller can read.
 
 `--run-id` and `--target` are required because the Playwright JSON does not
 provide reliable values for them. Add `--revision <value>` when the code
-revision is known; otherwise leave it out. Choose new output names for each
-run. Existing outputs are preserved unless `--force` is supplied. The importer
-preserves raw runner outcomes and does not judge oracle conformance.
+revision is known; otherwise leave it out. If the run ID or target is unknown,
+stop and request the actual value before importing; do not guess. Choose new
+output names for each run. Existing outputs are preserved unless `--force` is
+supplied. The importer preserves raw runner outcomes and does not judge oracle
+conformance.
 
 ## 5. Review run evidence and assertions
 
@@ -95,14 +109,17 @@ the approved mappings. Keep the run ID and target the same as the import above:
 
 ```sh
 node qa-harness/checks/qa-run-report.mjs matrix \
-  --root <project-root> \
+  --root "/path/to/consuming-project" \
   --investigation CASE-300 \
-  --report <playwright-report.json> \
+  --report "/path/to/consuming-project/test-results/report.json" \
   --run-id build-184 \
   --target staging \
-  --markdown-out qa-artifacts/CASE-300/matrix-build-184.md \
-  --csv-out qa-artifacts/CASE-300/matrix-build-184.csv
+  --markdown-out "/path/to/consuming-project/qa-artifacts/CASE-300/matrix-build-184.md" \
+  --csv-out "/path/to/consuming-project/qa-artifacts/CASE-300/matrix-build-184.csv"
 ```
+
+Replace the example absolute paths with the same project root and report used
+for the import.
 
 A reported `expected` result means the runner reported a pass; it does not
 establish that the generated assertion checks the approved oracle. A missing
