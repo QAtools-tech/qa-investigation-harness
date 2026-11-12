@@ -258,7 +258,7 @@ function addGap(gaps, status, fromId, toId, sourceLocator, reason) {
 }
 
 /** Read one investigation and reconcile it to a normalized Playwright run. */
-export async function buildCoverage(rootDirectory, investigationId, run) {
+export async function buildCoverage(rootDirectory, investigationId, run, { includeMatrixEvidence = false } = {}) {
   if (typeof investigationId !== "string" || !localIdPattern.test(investigationId)) {
     throw new Error("Invalid investigation ID; use a safe local ID without path separators.");
   }
@@ -379,7 +379,7 @@ export async function buildCoverage(rootDirectory, investigationId, run) {
 
   const matchedTestsByMapping = new Map(mappings.map((_, index) => [index, []]));
   const ambiguousMappingIndexes = new Set();
-  for (const reportTest of run.tests ?? []) {
+  for (const reportTest of run?.tests ?? []) {
     const ids = testTcIds(reportTest);
     const exactIdMappings = mappings
       .map((mapping, index) => ({ mapping, index }))
@@ -471,6 +471,7 @@ export async function buildCoverage(rootDirectory, investigationId, run) {
     if (!fileExists) addGap(gaps, "missing test", mapping.tcId, mapping.file, mapping.locator, "Mapped test source file does not exist under the project root.");
     if (ambiguousMappingIndexes.has(mappingIndex)) continue;
     const candidates = matchedTestsByMapping.get(mappingIndex) ?? [];
+    if (!run) continue;
     if (candidates.length === 0) {
       addGap(gaps, fileExists ? "missing execution evidence" : "missing test", mapping.tcId, mapping.file, mapping.locator, fileExists ? "The mapped test file exists but no matching test appears in the selected run." : "The mapped test file and matching run result are absent.");
       continue;
@@ -514,5 +515,6 @@ export async function buildCoverage(rootDirectory, investigationId, run) {
     orphanTests,
     unresolvedMappings,
     gaps,
+    ...(includeMatrixEvidence ? { evidence: { requirements, risks, decisions, mappings, plans, findings, matchedTestsByMapping: Object.fromEntries([...matchedTestsByMapping].map(([index, tests]) => [index, tests])), ambiguousMappingIndexes: [...ambiguousMappingIndexes] } } : {}),
   };
 }

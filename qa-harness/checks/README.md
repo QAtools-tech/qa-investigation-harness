@@ -95,6 +95,38 @@ Runner status does not verify an oracle. The report does not label a run,
 test, or suite healthy or adequate, and does not infer a failure's root cause.
 Possible causes remain empty until a human supplies a cited hypothesis.
 
+## Traceability matrix
+
+The matrix is a read-only, one-investigation view of requirements, risks,
+decisions, planned cases, mapped test files, selected-run outcomes, and Stage 5
+validation. It accepts no run and reports “no run selected”; it never invokes
+Playwright or changes investigation artifacts.
+
+```sh
+node qa-harness/checks/qa-run-report.mjs matrix --root . --investigation CASE-300
+```
+
+To export a pre-run matrix:
+
+```sh
+node qa-harness/checks/qa-run-report.mjs matrix --root . --investigation CASE-300 \
+  --markdown-out qa-artifacts/CASE-300/matrix.md --csv-out qa-artifacts/CASE-300/matrix.csv
+```
+
+To reconcile one selected report, supply its run ID and target:
+
+```sh
+node qa-harness/checks/qa-run-report.mjs matrix --root . --investigation CASE-300 \
+  --report test-results/report.json --run-id build-184 --target staging --revision abc123 \
+  --markdown-out qa-artifacts/CASE-300/matrix.md --csv-out qa-artifacts/CASE-300/matrix.csv
+```
+
+The matrix keeps freshness, mapping, execution per Playwright project, and
+validation separate. Missing and ambiguous evidence stays visible. CSV cells
+are quoted and formula-like imported values are prefixed for spreadsheet
+safety. Existing outputs require `--force`; outputs cannot replace the selected
+Playwright report.
+
 The synthetic fixture under `../fixtures/run-report/` exercises report parsing,
 coverage gaps, and triage without using project test data. CI runs the fixture
 scenario and the full Node test suite.
