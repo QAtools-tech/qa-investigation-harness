@@ -79,7 +79,7 @@ test("renders JSON and Markdown with coverage, run provenance, raw counts, and l
   ]);
   const result = renderRunReport(normalized, coverage);
 
-  assert.equal(result.json.schemaVersion, 1);
+  assert.equal(result.json.schemaVersion, 2);
   assert.equal(result.json.investigationId, "CASE-300");
   assert.equal(result.json.run.runId, "run-17");
   assert.equal(result.json.run.target, "staging");
@@ -96,6 +96,57 @@ test("renders JSON and Markdown with coverage, run provenance, raw counts, and l
   assert.match(result.markdown, /TC-404/);
   assert.match(result.markdown, /not-reviewed/);
   assert.match(result.markdown, /does not verify an oracle/i);
+});
+
+test("renders safe per-attempt attachment links and strips candidate paths and bodies", { skip: !implemented }, () => {
+  const normalized = run([{
+    ...testResult({ title: "TC-01 attachment evidence", status: "failure", order: 0 }),
+    attempts: [{
+      status: "failed",
+      duration: 100,
+      retry: 0,
+      startTime: "2026-11-11T10:00:00Z",
+      attachments: [{
+        name: "trace ] [review](https://evil.example).zip",
+        contentType: "application/zip",
+        path: "test-results/trace [x] (1)#?.zip",
+        availability: "available",
+        candidatePath: "C:/private/trace.zip",
+        body: "attachment secret",
+      }],
+    }],
+  }]);
+  const result = renderRunReport(normalized, coverage, { attachmentLinkPrefix: "../.." });
+  const outputAttachment = result.json.tests[0].attempts[0].attachments[0];
+
+  assert.deepEqual(outputAttachment, {
+    name: "trace ] [review](https://evil.example).zip",
+    contentType: "application/zip",
+    path: "test-results/trace [x] (1)#?.zip",
+    availability: "available",
+  });
+  assert.match(result.markdown, /trace.*trace%20%5Bx%5D%20%281%29%23%3F\.zip/);
+  assert.equal(JSON.stringify(result.json).includes("C:/private/trace.zip"), false);
+  assert.equal(JSON.stringify(result.json).includes("attachment secret"), false);
+  assert.match(result.markdown, /retry 0/);
+});
+
+test("renders unavailable attachments without exposing a link path", { skip: !implemented }, () => {
+  const normalized = run([{
+    ...testResult({ title: "TC-02 unavailable attachment", status: "failure" }),
+    attempts: [{
+      status: "failed",
+      duration: 50,
+      retry: 0,
+      startTime: null,
+      attachments: [{ name: "outside trace", contentType: "application/zip", path: null, availability: "unavailable" }],
+    }],
+  }]);
+  const result = renderRunReport(normalized, coverage);
+
+  assert.equal(result.json.tests[0].attempts[0].attachments[0].path, null);
+  assert.match(result.markdown, /outside trace.*unavailable/i);
+  assert.doesNotMatch(result.markdown, /\[outside trace/);
 });
 
 test("renders orphan tests, per-test outcomes, conformance findings, and retry timelines in Markdown", { skip: !implemented }, () => {

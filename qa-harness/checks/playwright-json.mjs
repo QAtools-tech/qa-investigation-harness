@@ -85,6 +85,13 @@ export function parsePlaywrightReport(report, options = {}) {
           duration: numeric(result.duration),
           retry: numeric(result.retry) ?? attemptIndex,
           startTime: boundedString(result.startTime, 100),
+          attachments: (Array.isArray(result.attachments) ? result.attachments : [])
+            .filter((attachment) => attachment && typeof attachment === "object" && !Array.isArray(attachment))
+            .map((attachment) => ({
+              name: boundedString(attachment.name, 500),
+              contentType: boundedString(attachment.contentType, 200),
+              candidatePath: boundedString(attachment.path),
+            })),
         };
       });
 

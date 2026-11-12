@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { buildCoverage } from "./coverage-report.mjs";
 import { parsePlaywrightReport, PlaywrightReportError } from "./playwright-json.mjs";
 import { renderRunReport } from "./run-report-render.mjs";
+import { resolveRunAttachmentPaths } from "./run-attachment-paths.mjs";
 import { buildTraceabilityMatrix, renderTraceabilityMatrix } from "./traceability-matrix.mjs";
 import { buildGeneratorHandoff } from "./generator-handoff.mjs";
 
@@ -262,7 +263,9 @@ export async function main(argv = process.argv.slice(2)) {
   run.metadata.target = values.get("--target");
   run.metadata.revision = values.get("--revision") ?? null;
   run.metadata.capturedAt = values.get("--captured-at") ?? null;
-  const rendered = renderRunReport(run, coverage);
+  run = await resolveRunAttachmentPaths(run, rootReal);
+  const attachmentLinkPrefix = path.relative(path.dirname(outputPaths[1]), rootReal).split(path.sep).join("/");
+  const rendered = renderRunReport(run, coverage, { attachmentLinkPrefix });
   try {
     await writeOutputPair(outputPaths[0], outputPaths[1], `${JSON.stringify(rendered.json, null, 2)}\n`, rendered.markdown, args.force);
   } catch (error) {

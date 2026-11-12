@@ -167,6 +167,11 @@ links and a failure triage timeline. Links remain unresolved when evidence is
 missing or ambiguous. The command does not invoke Playwright, access a browser
 or provider, determine an oracle, infer a root cause, or label a suite healthy.
 The human supplies any conformance finding through a cited, TC-keyed record.
+Failure triage links to file-backed Playwright attachments only when they
+resolve to existing regular files inside the selected project root. Markdown
+links are relative to the report; JSON keeps the project-relative path. The
+reports never read or copy attachment bodies, stdout, or error payloads, and
+omit unsafe, missing, or body-only attachment paths.
 
 ## Artifact chain
 
@@ -179,7 +184,7 @@ The human supplies any conformance finding through a cited, TC-keyed record.
 | `specs/<ticket>.plan.md` | `qa-challenge` Part B | Approved rows plus source-date chain | Generator-readable plan, without harness-internal risk metadata |
 | Generated test files | Consuming project's generator | Plan and consuming project setup | Playwright code outside this repository |
 | `qa-artifacts/<ticket>/validation.md` | `qa-validate` | Mapping, plan, generated tests, raw runs | Oracle conformance and mutation findings |
-| `qa-artifacts/<id>/run-report.json` and `qa-artifacts/<id>/run-report.md` | Offline report CLI | Existing Playwright JSON, investigation artifacts, run ID, and target | Coverage links, raw result references, and failure triage; no test execution or automatic conformance verdict |
+| `qa-artifacts/<id>/run-report.json` and `qa-artifacts/<id>/run-report.md` | Offline report CLI | Existing Playwright JSON, investigation artifacts, run ID, and target | Coverage links, raw result references, failure triage, and safe in-root attachment links; no test execution or automatic conformance verdict |
 
 Dates recorded in each artifact let later stages detect stale upstream observations. Existing `TC-<NN>` entries are append-only when a plan is extended.
 
