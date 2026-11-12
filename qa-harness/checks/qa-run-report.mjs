@@ -4,10 +4,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildCoverage } from "./coverage-report.mjs";
 import { parsePlaywrightReport, PlaywrightReportError } from "./playwright-json.mjs";
-import { renderRunReport } from "./run-report-render.mjs";
+import { markdownText, renderRunReport } from "./run-report-render.mjs";
 import { resolveRunAttachmentPaths } from "./run-attachment-paths.mjs";
 import { buildTraceabilityMatrix, renderTraceabilityMatrix } from "./traceability-matrix.mjs";
 import { buildGeneratorHandoff } from "./generator-handoff.mjs";
+import { buildRunComparison, RunComparisonInputError } from "./run-comparison.mjs";
 
 const valueFlags = ["--report", "--root", "--investigation", "--run-id", "--target", "--revision", "--captured-at", "--json-out", "--markdown-out"];
 const requiredFlags = ["--report", "--root", "--investigation", "--run-id", "--target", "--json-out", "--markdown-out"];
@@ -16,7 +17,7 @@ class UsageError extends Error {}
 class InputError extends Error {}
 
 function usage() {
-  return "Usage: node qa-harness/checks/qa-run-report.mjs --report <file> --root <project> --investigation <id> --run-id <id> --target <name> --json-out <file> --markdown-out <file> [--revision <rev>] [--captured-at <ISO-time>] [--force]\n       node qa-harness/checks/qa-run-report.mjs matrix --root <project> --investigation <id> [--report <file> --run-id <id> --target <name> [--revision <rev>]] [--markdown-out <file> --csv-out <file>] [--force]\n       node qa-harness/checks/qa-run-report.mjs handoff --root <project> --investigation <id>";
+  return "Usage: node qa-harness/checks/qa-run-report.mjs --report <file> --root <project> --investigation <id> --run-id <id> --target <name> --json-out <file> --markdown-out <file> [--revision <rev>] [--captured-at <ISO-time>] [--force]\n       node qa-harness/checks/qa-run-report.mjs matrix --root <project> --investigation <id> [--report <file> --run-id <id> --target <name> [--revision <rev>]] [--markdown-out <file> --csv-out <file>] [--force]\n       node qa-harness/checks/qa-run-report.mjs compare --root <project> --before <run-report.json> --after <run-report.json> --json-out <file> --markdown-out <file> [--force]\n       node qa-harness/checks/qa-run-report.mjs handoff --root <project> --investigation <id>";
 }
 
 export function parseArgs(argv) {
@@ -194,7 +195,113 @@ async function handoffMain(argv) {
   return 0;
 }
 
+async function loadSavedRunReport(reportPath, label) {
+  let content;
+  try {
+    content = await readFile(reportPath, "utf8");
+  } catch (error) {
+    if (error.code === "ENOENT" || error.code === "EISDIR") throw new InputError(`${label} report is missing or is not a file: ${reportPath}`);
+    throw error;
+  }
+  try {
+    return JSON.parse(content);
+  } catch {
+    throw new InputError(`${label} report is not valid JSON.`);
+  }
+}
+
+function comparisonMarkdown(comparison) {
+  const lines = [
+    `# Playwright run comparison: ${markdownText(comparison.investigationId)}`,
+    "",
+    `Target: ${markdownText(comparison.before.target)}`,
+    `Before run: ${markdownText(comparison.before.runId)} (${markdownText(comparison.before.capturedAt ?? "unknown")}; revision ${markdownText(comparison.before.revision ?? "unknown")})`,
+    `After run: ${markdownText(comparison.after.runId)} (${markdownText(comparison.after.capturedAt ?? "unknown")}; revision ${markdownText(comparison.after.revision ?? "unknown")})`,
+    "",
+    "Runner outcome comparison only; it does not verify oracle conformance or identify a cause.",
+    "",
+    "## Changes",
+    "",
+    "| Classification | Count |",
+    "|---|---:|",
+    ...Object.entries(comparison.counts).map(([classification, count]) => `| ${markdownText(classification)} | ${count} |`),
+    "",
+    "## Case outcomes",
+    "",
+    "| Case | Project | Before | Before evidence | After | After evidence | Change | Reason |",
+    "|---|---|---|---|---|---|---|---|",
+    ...(comparison.rows.length ? comparison.rows.map((row) => [
+      row.caseId,
+      row.projectName,
+      row.before.status,
+      row.before.sourcePointer ?? row.before.mappedFile,
+      row.after.status,
+      row.after.sourcePointer ?? row.after.mappedFile,
+      row.classification,
+      row.reason,
+    ].map(markdownText).map((value) => value || "—").join(" | ").replace(/^/, "| ").replace(/$/, " |")) : ["| — | — | — | — | — | — | — | No mapped cases were found |"]),
+    "",
+    "Evidence states:",
+    "",
+    "- `observed` links one stored runner outcome; `no-result`, `unmapped`, `project-not-included`, and `ambiguous` remain not comparable.",
+    "- `expected` means the runner reported a passing outcome; it does not prove the test checked its oracle.",
+    "",
+  ];
+  return lines.join("\n");
+}
+
+async function compareMain(argv) {
+  const allowed = new Set(["--root", "--before", "--after", "--json-out", "--markdown-out"]);
+  const values = new Map();
+  let force = false;
+  for (let index = 0; index < argv.length; index += 1) {
+    const flag = argv[index];
+    if (flag === "--force") {
+      if (force) throw new UsageError("Duplicate flag --force.");
+      force = true;
+      continue;
+    }
+    if (!allowed.has(flag) || values.has(flag) || !argv[index + 1] || argv[index + 1].startsWith("--")) {
+      throw new UsageError(`Invalid or duplicate compare option ${flag}.`);
+    }
+    values.set(flag, argv[++index]);
+  }
+  for (const flag of allowed) if (!values.has(flag)) throw new UsageError(`Missing required ${flag}.`);
+
+  const root = path.resolve(values.get("--root"));
+  const rootReal = await realpath(root);
+  if (!(await stat(rootReal)).isDirectory()) throw new InputError("--root must name a project directory.");
+  const outputs = await resolveOutputs(root, rootReal, values.get("--json-out"), values.get("--markdown-out"));
+  const reportPaths = [values.get("--before"), values.get("--after")].map((file) => path.resolve(file));
+  const canonicalInputs = await Promise.all(reportPaths.map((file) => realpath(file).catch((error) => error.code === "ENOENT" ? file : Promise.reject(error))));
+  const canonicalOutputs = outputs.map((file) => process.platform === "win32" ? file.toLowerCase() : file);
+  const inputKeys = canonicalInputs.map((file) => process.platform === "win32" ? file.toLowerCase() : file);
+  if (canonicalOutputs.some((output) => inputKeys.includes(output))) throw new InputError("Comparison outputs must not replace either input run report.");
+
+  const before = await loadSavedRunReport(reportPaths[0], "Before");
+  const after = await loadSavedRunReport(reportPaths[1], "After");
+  const comparison = {
+    ...buildRunComparison(before, after),
+    generatedAt: new Date().toISOString(),
+  };
+  try {
+    await writeOutputPair(outputs[0], outputs[1], `${JSON.stringify(comparison, null, 2)}\n`, comparisonMarkdown(comparison), force);
+  } catch (error) {
+    process.stderr.write(`Cannot write comparison outputs: ${error.message}\n`);
+    return 3;
+  }
+  process.stdout.write("Wrote JSON and Markdown run comparison.\n");
+  return 0;
+}
+
 export async function main(argv = process.argv.slice(2)) {
+  if (argv[0] === "compare") {
+    try { return await compareMain(argv.slice(1)); }
+    catch (error) {
+      process.stderr.write(`${error.message}\n`);
+      return error instanceof UsageError || error instanceof InputError || error instanceof RunComparisonInputError ? 2 : 3;
+    }
+  }
   if (argv[0] === "handoff") {
     try { return await handoffMain(argv.slice(1)); }
     catch (error) {

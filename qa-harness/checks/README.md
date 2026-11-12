@@ -102,6 +102,35 @@ Runner status does not verify an oracle. The report does not label a run,
 test, or suite healthy or adequate, and does not infer a failure's root cause.
 Possible causes remain empty until a human supplies a cited hypothesis.
 
+## Compare saved run reports
+
+Compare two already-generated harness run-report JSON files for the same
+investigation and exact target string. The command reads only those reports; it
+does not rerun Playwright or rebuild either run's historical mapping.
+
+```sh
+node qa-harness/checks/qa-run-report.mjs compare \
+  --root . \
+  --before qa-artifacts/CASE-300/before-run-report.json \
+  --after qa-artifacts/CASE-300/after-run-report.json \
+  --json-out qa-artifacts/CASE-300/run-comparison.json \
+  --markdown-out qa-artifacts/CASE-300/run-comparison.md
+```
+
+Both inputs must use run-report schema version 2 and have the same stored
+investigation ID and target. Target values are compared exactly. Output paths
+must stay inside the selected project root and differ from each other and both
+inputs; parent directories must already exist. Existing outputs require
+`--force` and are replaced as a pair.
+
+Rows align stored case IDs with Playwright project names. `unchanged`,
+`regressed`, `recovered`, and `changed` describe only observed runner-status
+transitions. Missing or ambiguous mapping/results and projects excluded from a
+run are `not comparable`; the comparison does not infer test additions,
+removals, oracle conformance, product quality, or root cause. `expected` means
+the runner reported a passing outcome, not that an assertion checked its
+oracle. The comparison JSON uses schema version `1`.
+
 ## Traceability matrix
 
 The matrix is a read-only, one-investigation view of requirements, risks,

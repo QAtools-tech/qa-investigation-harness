@@ -61,8 +61,10 @@ flowchart LR
     R -->|Existing plan or spec| PR[Direct read-only plan review]
     R -->|Failure evidence| TR[Direct triage]
     R -->|Existing Playwright JSON| RR[Offline report CLI]
+    R -->|Two saved run reports| CMP[Offline comparison CLI]
     R -->|Recorded observations| EV
     RR --> REP[Coverage links and failure triage]
+    REP -->|Saved JSON reports| CMP
     ID --> EV{Evidence route}
     EV -->|Non-production URL + interactive account| EX[Explore with Playwright snapshot]
     EV -->|Recorded or imported observations| MOD[Model states and transitions]
@@ -102,6 +104,7 @@ Each flow is identified by an existing ticket ID or a local investigation ID:
 | Validate | Current approvals, mapping, plan, and mapped test source | `qa-artifacts/<id>/validation.md`; optional assertion mutation is explicit and restored |
 | Triage | Identifiable failure or run evidence | Observed failure, separate possible causes, and missing context |
 | Offline run report | Existing Playwright JSON report, investigation artifacts, run ID, and target | `qa-artifacts/<id>/run-report.json` and `qa-artifacts/<id>/run-report.md` with coverage links, failure triage, and safe in-root attachment links |
+| Offline run comparison | Two saved harness run reports for the same investigation and exact target | JSON and Markdown outcome comparison; no new test execution or root-cause inference |
 
 The `qa-artifacts/` and `specs/` directories are generated workflow output and are intentionally ignored by default. This repository documents and validates the process; it does not publish real investigation findings.
 
