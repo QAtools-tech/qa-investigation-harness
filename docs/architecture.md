@@ -41,8 +41,8 @@ The boundary around the consuming project matters: this repository does not own 
 | Jira reference adapter | [`qa-harness/adapters/jira/`](../qa-harness/adapters/jira/README.md) | Configured Jira issue normalization; no Xray, Confluence, or writeback |
 | Focused reviewer contracts | [`qa-harness/stages/risk-reviewer.md`](../qa-harness/stages/risk-reviewer.md), [`qa-harness/stages/validation-reviewer.md`](../qa-harness/stages/validation-reviewer.md) | Evidence-only review inputs, output shape, and decision boundaries |
 | Artifact checker | [`qa-harness/checks/`](../qa-harness/checks/) | Deterministic, read-only artifact diagnostics for manual, optional hook, and CI use |
-| GitHub Copilot adapters | [`../.github/prompts/`](../.github/prompts/) | Prompt shape and arguments for VS Code/Copilot |
-| Copilot reviewer agents | [`../.github/agents/`](../.github/agents/) | Scoped review roles with read/search-only tools |
+| VS Code Local prompt adapters | [`../.github/prompts/`](../.github/prompts/) | Prompt shape and arguments for the Local harness; the current Copilot harness does not load prompt files |
+| Copilot reviewer agents | [`../.github/agents/`](../.github/agents/) | Scoped review roles declare read/search-only tools; runtime behavior is not live-verified |
 | Claude Code adapters | [`../.claude/skills/`](../.claude/skills/) | Skill metadata and argument forwarding |
 | Claude reviewer agents | [`../.claude/agents/`](../.claude/agents/) | Scoped review roles with read/search-only tools |
 | Codex guidance | [`../AGENTS.md`](../AGENTS.md) | Plain-language invocation and MCP setup guidance |
@@ -67,8 +67,10 @@ returns candidate gaps with transition references, evidence, a proposed
 oracle, and missing evidence. The validation reviewer traces approved risks
 through the plan mapping and available generated-test evidence; it stops when
 approval is missing or stale. Both roles return cited findings only. Claude
-Code and Copilot expose read/search-only reviewer tools; Codex skills describe
-the same boundary but cannot enforce a tool allowlist.
+Code and Copilot reviewer definitions declare read/search-only tools; this
+repository has not verified their behavior in a live client session. Codex
+skills describe the same boundary but cannot enforce a tool allowlist. See the
+[compatibility matrix](compatibility.md) for the current evidence level.
 
 `qa-harness/checks/qa-check.mjs` performs deterministic structural checks and
 never repairs artifacts or decides approval freshness. It runs manually, from

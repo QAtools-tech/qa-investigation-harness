@@ -2,6 +2,10 @@
 
 Thank you for helping improve the QA Investigation Harness. This repository is a documentation-and-prompt project: contributions should make the investigation contract clearer, safer, or easier to use without changing the consuming project's application behavior.
 
+For current client boundaries, use the [compatibility matrix](docs/compatibility.md).
+Preserve legacy ticket paths and approval history as described in the
+[migration guide](docs/migration.md).
+
 ## Before editing
 
 Read these files in order:
@@ -38,15 +42,23 @@ The shared rules and stage files are the source of truth. Keep adapters thin; do
 
 ## Local checks
 
-This repository has no package manifest, build script, runtime, or automated test suite. Run the checks relevant to the files you changed:
+This repository has no application runtime, package manifest, or dependency install. The checker, offline report tool, and Node.js test suite use built-in modules; Node.js 20 or newer is required. Run the full suite and repository checks before opening a pull request:
 
 ```powershell
 git diff --check
+node --test qa-harness/checks/*.test.mjs qa-harness/adapters/*.test.mjs qa-harness/adapters/jira/*.test.mjs
+node qa-harness/checks/qa-check.mjs
 rg --files -uu | Sort-Object
 rg -n -i --hidden --glob '!**/.git/**' --glob '!**/.codebase-memory/**' '(api[_-]?key|secret|password|token|private[_-]?key|BEGIN [A-Z ]+PRIVATE KEY|postgres://|mongodb://)' .
 ```
 
-For SVG changes, parse the files as XML and confirm the intended `viewBox`. For Markdown changes, compare every local link with the repository tree and read the rendered hierarchy once before opening a pull request.
+The full Node test suite includes the local Markdown-link integration check;
+run only that check with
+`node --test qa-harness/checks/markdown-links.test.mjs`. Review secret-scan
+matches: examples may intentionally name sensitive field types, but fixture
+values must never contain real credentials. For SVG changes, parse the files
+as XML and confirm the intended `viewBox`. For Markdown changes, review the
+rendered hierarchy once before opening a pull request.
 
 ## Pull requests
 

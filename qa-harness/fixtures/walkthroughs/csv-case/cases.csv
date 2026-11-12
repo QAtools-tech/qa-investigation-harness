@@ -1,0 +1,2 @@
+case_id,title,steps,expected_result
+CASE-701,Filter open tasks,Choose Open in the task status filter,
