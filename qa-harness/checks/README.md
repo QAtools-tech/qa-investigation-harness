@@ -127,6 +127,16 @@ are quoted and formula-like imported values are prefixed for spreadsheet
 safety. Existing outputs require `--force`; outputs cannot replace the selected
 Playwright report.
 
+To prepare a read-only handoff summary for the consuming project's generator:
+
+```sh
+node qa-harness/checks/qa-run-report.mjs handoff --root . --investigation CASE-300
+```
+
+The command prints ready and blocked cases to stdout. It does not write
+artifacts, invoke the generator, or author Playwright tests. Only cases with a
+current approval and unambiguous plan and mapping appear as ready.
+
 The synthetic fixture under `../fixtures/run-report/` exercises report parsing,
 coverage gaps, and triage without using project test data. CI runs the fixture
 scenario and the full Node test suite.

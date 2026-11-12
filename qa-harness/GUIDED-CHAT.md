@@ -48,6 +48,13 @@ show execution as “no run selected”. Export Markdown or CSV only when asked.
 Keep decision freshness, mapping, per-project execution, and Stage 5 validation
 as separate fields; a passing run does not establish oracle conformance.
 
+For “Prepare the Playwright generator handoff for <investigation-id>”, show
+the read-only handoff summary from the saved matrix evidence. List only cases
+with a current approval and an unambiguous plan and test mapping as ready; show
+all other cases as blocked with their evidence. The copyable instruction is
+for the human to pass to the consuming project's generator. Do not invoke the
+generator or imply that tests have been written.
+
 ## Show the next action
 
 After a guided action, keep the stage's required preview or findings. Add a
