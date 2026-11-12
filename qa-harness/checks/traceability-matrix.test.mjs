@@ -155,3 +155,120 @@ test("matrix CLI exports a selected run without replacing its input report", asy
   assert.equal(blocked.status, 2);
   assert.equal(await readFile(report, "utf8"), before);
 });
+
+function matrixActionCoverage({
+  requirement = true,
+  risk = true,
+  decision = "APPROVED",
+  freshness = "fresh",
+  ambiguousDecision = false,
+  mapping = true,
+  runMatch = true,
+  findings = [],
+  requirementIds = requirement ? ["C1"] : [],
+} = {}) {
+  const links = [];
+  if (risk && decision !== null) {
+    links.push({ kind: "risk-decision", fromId: "R1", status: "linked", freshness });
+    if (ambiguousDecision) links.push({ kind: "risk-decision", fromId: "R1", status: "linked", freshness });
+  }
+  if (mapping && decision !== null) links.push({ kind: "decision-plan", fromId: "D1", status: "linked" });
+  if (mapping) links.push({ kind: "plan-test", fromId: "TC-01", status: "linked" });
+  return {
+    investigationId: "CASE-300",
+    links,
+    evidence: {
+      requirements: requirement ? [{ id: "C1", title: "Filter requirement", locator: "investigation.md:1" }] : [],
+      risks: risk ? [{ id: "R1", text: "Filter risk", requirementIds, locator: "risks.md:1" }] : [],
+      decisions: decision === null ? [] : [{ id: "D1", riskId: "R1", decision, locator: "risks.md:5" }],
+      mappings: mapping ? [{ riskId: "R1", tcId: "TC-01", file: "tests/filter.spec.ts", locator: "risks.md:10" }] : [],
+      plans: mapping ? [{ tcId: "TC-01", locator: "specs/CASE-300.plan.md:3" }] : [],
+      findings,
+      matchedTestsByMapping: runMatch ? { 0: [{ projectName: "chromium", status: "expected" }] } : {},
+      ambiguousMappingIndexes: [],
+    },
+  };
+}
+
+function matrixActionRow(options, selectedRun = null) {
+  return buildTraceabilityMatrix(matrixActionCoverage(options), { selectedRun }).rows[0];
+}
+
+test("missing requirement risk link recommends scope review", () => {
+  const row = matrixActionRow({ requirement: true, risk: false, decision: null, mapping: false });
+  assert.equal(row.nextAction, "Review requirement scope; add an evidence-backed risk link only if warranted.");
+});
+
+test("dangling requirement references recommend fixing the link before later steps", () => {
+  const dangling = buildTraceabilityMatrix(matrixActionCoverage({ requirement: false, requirementIds: ["C999"] } )).rows[0];
+  assert.equal(dangling.nextAction, "Review requirement scope; add an evidence-backed risk link only if warranted.");
+  assert.match(dangling.sources, /risks\.md:1/);
+
+  const mixed = buildTraceabilityMatrix(matrixActionCoverage({ requirementIds: ["C1", "C999"] })).rows[0];
+  assert.equal(mixed.nextAction, "Review requirement scope; add an evidence-backed risk link only if warranted.");
+  assert.match(mixed.sources, /risks\.md:1/);
+});
+
+for (const scenario of [
+  { name: "absent", options: { decision: null, mapping: true } },
+  { name: "stale", options: { freshness: "stale" } },
+  { name: "unknown", options: { freshness: "unknown" } },
+  { name: "ambiguous", options: { ambiguousDecision: true } },
+]) {
+  test("missing or " + scenario.name + " decision blocks mapping guidance", () => {
+    const row = matrixActionRow(scenario.options, { runId: "run-1", target: "staging" });
+    assert.equal(row.nextAction, "Review the risk and oracle; record or reconcile the human decision.");
+  });
+}
+
+test("fresh rejected decision has no generation action", () => {
+  const row = matrixActionRow({ decision: "REJECTED", mapping: false });
+  assert.equal(row.nextAction, "");
+});
+
+test("missing mapping recommends plan and generated-test mapping resolution", () => {
+  const row = matrixActionRow({ mapping: false });
+  assert.equal(row.nextAction, "Resolve the approved risk's plan and generated-test mapping.");
+});
+
+test("no selected run recommends selecting a saved report", () => {
+  const row = matrixActionRow();
+  assert.equal(row.execution, "no run selected");
+  assert.equal(row.nextAction, "Select a saved run report to inspect execution evidence.");
+});
+
+test("selected run without matching test result asks for a report containing the mapped test", () => {
+  const row = matrixActionRow({ runMatch: false }, { runId: "run-1", target: "staging" });
+  assert.equal(row.execution, "no matching result");
+  assert.equal(row.nextAction, "Select or generate a report that includes this mapped test.");
+});
+
+test("missing validation recommends Stage 5 oracle review", () => {
+  const row = matrixActionRow({}, { runId: "run-1", target: "staging" });
+  assert.equal(row.validation, "not reviewed");
+  assert.equal(row.nextAction, "Run Stage 5 validation for this mapped test against the approved oracle.");
+});
+
+test("recorded validation finding recommends reviewing cited evidence without reading its prose", () => {
+  const row = matrixActionRow({
+    findings: [{ tcId: "TC-01", conformance: "gap", finding: "Only toast visible", locator: "test.spec.ts:42", recordLocator: "validation.md:8" }],
+  }, { runId: "run-1", target: "staging" });
+  assert.equal(row.nextAction, "Review the cited Stage 5 finding; use the project's generator if a test change is warranted.");
+  assert.match(row.sources, /validation\.md:8/);
+});
+
+test("only earliest unresolved action is shown", () => {
+  const row = matrixActionRow({ freshness: "stale", mapping: false, runMatch: false, findings: [{ tcId: "TC-01", conformance: "gap", finding: "weak", locator: "test.spec.ts:42" }] });
+  assert.equal(row.nextAction, "Review the risk and oracle; record or reconcile the human decision.");
+});
+
+test("matrix Markdown and CSV render next action", () => {
+  const { markdown, csv } = renderTraceabilityMatrix({
+    investigationId: "CASE-300",
+    rows: [{ requirement: "C1", risk: "R1", decision: "approved", case: "TC-01", mappedTest: "tests/a.spec.ts", mappingStatus: "current", execution: "chromium: expected", validation: "not reviewed", sources: "risks.md:5", nextAction: "=HYPERLINK" }],
+  });
+  assert.match(markdown, /\| Next action \|/);
+  assert.match(markdown, /\| =HYPERLINK \|/);
+  assert.match(csv, /"Next action"/);
+  assert.match(csv, /"'=HYPERLINK"/);
+});
