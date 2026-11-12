@@ -86,6 +86,10 @@ the current Copilot harness; see [migration guidance](../docs/migration.md).
 
 ### Claude Code
 
+Say **“Start QA with this case”** and supply your evidence. To pick up saved
+work, say **“Continue QA for <investigation-id>.”** See the
+[guided chat walkthrough](walkthroughs/guided-chat.md).
+
 - `CLAUDE.md` (repo root) points here automatically
 - `/qa status <id>` reports progress; `/qa resume <id>` continues from the next eligible action
 - Stages are skills: `/qa-intake`, `/qa-review-plan`, `/qa-explore`, `/qa-model`, `/qa-challenge`, `/qa-validate`
@@ -106,6 +110,10 @@ with `npx playwright init-agents --loop=claude`, then point it at
 `specs/PROJ-1234.plan.md`.
 
 ### Codex
+
+Say **“Start QA with this case”** and supply your evidence. To pick up saved
+work, say **“Continue QA for <investigation-id>.”** See the
+[guided chat walkthrough](walkthroughs/guided-chat.md).
 
 - `AGENTS.md` (repo root) is read automatically; project skills provide
   `$qa-intake`, `$qa-review-plan`, `$qa-status-resume`, `$qa-explore`,
