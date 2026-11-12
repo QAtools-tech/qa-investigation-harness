@@ -21,7 +21,9 @@ flowchart TB
     R -->|existing plan or spec| PR[Direct read-only plan review]
     R -->|failure evidence| TR[Direct triage]
     R -->|existing Playwright JSON| RR[Offline run-report CLI]
+    R -->|two saved run reports| CMP[Offline run-comparison CLI]
     RR --> REP[Coverage links and failure triage]
+    REP -->|Saved report JSON| CMP
 
     IR --> ER{Evidence and prerequisites}
     ER -->|confirmed non-production URL and account| EX[Explore with Playwright MCP snapshot]
@@ -62,6 +64,7 @@ The boundary around the consuming project matters: this repository does not own 
 | Recorded observations with locators | Model | Model directly from supplied observations; preserve unknowns and do not claim live exploration. |
 | Identifiable failure evidence | Triage | Separate observed failure from possible causes and name the evidence needed to narrow them. |
 | Existing Playwright JSON reporter file | Offline run-report CLI | Requires explicit run ID and target; writes Markdown/JSON coverage and triage. It does not run Playwright or infer cause. |
+| Two saved harness run reports | Offline run-comparison CLI | Requires the same investigation ID and exact target; compares stored project/case outcomes without rerunning tests or inferring cause. |
 
 ## Source-of-truth hierarchy
 
@@ -173,6 +176,14 @@ links are relative to the report; JSON keeps the project-relative path. The
 reports never read or copy attachment bodies, stdout, or error payloads, and
 omit unsafe, missing, or body-only attachment paths.
 
+`qa-run-report.mjs compare` compares two saved schema-v2 run reports for the
+same investigation ID and exact target string. It writes a schema-v1 JSON
+comparison and a Markdown summary under the selected project root. Case/project
+rows use each report's stored mapping and execution links; missing, ambiguous,
+and unobserved evidence stays not comparable. `expected` means only that the
+runner reported a passing outcome. Comparison does not establish oracle
+conformance, product quality, or root cause, and it never runs Playwright.
+
 ## Artifact chain
 
 | Artifact | Owner | Built from | Purpose |
@@ -185,6 +196,7 @@ omit unsafe, missing, or body-only attachment paths.
 | Generated test files | Consuming project's generator | Plan and consuming project setup | Playwright code outside this repository |
 | `qa-artifacts/<ticket>/validation.md` | `qa-validate` | Mapping, plan, generated tests, raw runs | Oracle conformance and mutation findings |
 | `qa-artifacts/<id>/run-report.json` and `qa-artifacts/<id>/run-report.md` | Offline report CLI | Existing Playwright JSON, investigation artifacts, run ID, and target | Coverage links, raw result references, failure triage, and safe in-root attachment links; no test execution or automatic conformance verdict |
+| `qa-artifacts/<id>/run-comparison.json` and `qa-artifacts/<id>/run-comparison.md` | Offline comparison CLI | Two saved reports for the same investigation and exact target | Stored runner-status transitions and evidence gaps; no test execution, oracle verdict, or root-cause inference |
 
 Dates recorded in each artifact let later stages detect stale upstream observations. Existing `TC-<NN>` entries are append-only when a plan is extended.
 

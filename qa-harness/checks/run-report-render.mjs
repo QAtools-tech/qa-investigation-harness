@@ -14,7 +14,7 @@ function boundedText(value, limit = 2000) {
   return value.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, " ").slice(0, limit);
 }
 
-function markdownText(value) {
+export function markdownText(value) {
   const text = boundedText(String(value ?? "—")).replace(/[\r\n]+/g, " ");
   return text
     .replaceAll("&", "&amp;")
