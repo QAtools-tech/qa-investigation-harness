@@ -1,7 +1,10 @@
 # Walkthrough: Start and continue QA in chat
 
-Open a disposable checkout in Codex or Claude Code. Use a fresh chat for
-each independent flow. Keep rehearsal artifacts in the disposable checkout
+Open a disposable checkout in Codex, Claude Code, or VS Code with the
+Copilot harness. Use a fresh chat for each independent flow. In VS Code, open
+the checkout root and check that the session discovers
+[the repository's Copilot instructions](../../.github/copilot-instructions.md).
+Keep rehearsal artifacts in the disposable checkout
 and compare the relevant files before and after each read-only or blocked
 action. These examples use synthetic evidence. They exercise routing and
 stop conditions without needing a live application or a test generator.

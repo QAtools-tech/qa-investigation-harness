@@ -6,7 +6,7 @@
 
 The QA Investigation Harness turns a local case, spec, or run into an evidence-backed hand-off for a separate Playwright test-generation agent. It walks the real browser flow when needed, models observed states and transitions, puts risks in front of a human for approval, and produces a plan that can be audited after generation.
 
-It is deliberately small and tool-agnostic: the methodology lives in shared instructions. Claude Code and Codex have native workflow skills; VS Code Local has prompt adapters. The current Copilot harness does not load those prompt files yet. See the [compatibility matrix](docs/compatibility.md) for tested limits.
+The methodology lives in shared instructions. Codex, Claude Code, and GitHub Copilot Chat in VS Code have plain-language entry points. Codex and Claude Code also have workflow skills, and VS Code Local has prompt adapters. See the [compatibility matrix](docs/compatibility.md) for verification status.
 
 ## Why it exists
 
@@ -116,7 +116,8 @@ The shared methodology lives in [`qa-harness/`](qa-harness/):
 - [`adapters/README.md`](qa-harness/adapters/README.md) documents the normalized source record contract, Jira pilot, and unverified live client bindings.
 - [`.agents/skills/`](.agents/skills/) provides Codex stage and review shortcuts; Codex skills do not enforce reviewer tool restrictions.
 - [`.claude/agents/`](.claude/agents/) and [`.github/agents/`](.github/agents/) provide read/search-only focused reviewers.
-- [`.github/prompts/`](.github/prompts/) provides VS Code Local prompt adapters; the current Copilot harness requires a skill conversion not yet included here.
+- [`.github/copilot-instructions.md`](.github/copilot-instructions.md) connects Copilot Chat in VS Code to the shared guided workflow.
+- [`.github/prompts/`](.github/prompts/) provides VS Code Local prompt adapters.
 - [`.claude/skills/`](.claude/skills/) provides Claude Code skill adapters.
 - [`AGENTS.md`](AGENTS.md) provides Codex instructions.
 - [`CLAUDE.md`](CLAUDE.md) provides Claude Code repository instructions.
@@ -133,9 +134,9 @@ This repository has no application runtime, package manifest, dependency install
 
 ### Start in chat
 
-In Codex or Claude Code, say **“Start QA with this case”** and supply the
-case, plan, observations, or failed run. The assistant suggests a route and
-shows the next action. To return to saved work, say
+In Codex, Claude Code, or GitHub Copilot Chat in VS Code, say **“Start QA
+with this case”** and supply the case, plan, observations, or failed run. The
+assistant suggests a route and shows the next action. To return to saved work, say
 **`Continue QA for <investigation-id>`** in a new chat with the same checkout.
 
 Use your team's ticket reference or confirm a local investigation ID if
@@ -167,9 +168,16 @@ cd qa-investigation-harness
 
 The `.github/prompts/qa-*.prompt.md` adapters run in VS Code's Local harness.
 The Local harness is scheduled for removal in February 2027. VS Code's current
-Copilot harness does not load these prompt files; use the manual shared-rule
-path there, or follow the [migration guide](docs/migration.md). The repository
-has not verified the current Copilot-harness workflow end to end.
+Copilot harness has a separate guided chat entry point below.
+
+#### GitHub Copilot Chat in VS Code
+
+Open the repository root in VS Code and start a chat using the Copilot
+harness. Ask “Start QA with this case” or use
+`Continue QA for <investigation-id>`. The repository's
+[Copilot instructions](.github/copilot-instructions.md) point to the shared
+guide. See [compatibility](docs/compatibility.md) for verification status and
+[the migration guide](docs/migration.md) for reusable prompt shortcuts.
 
 #### Claude Code
 
