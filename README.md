@@ -42,6 +42,7 @@ investigation ID + case, spec, or run
 - **Read-only status and resume** — reports completed work, blockers, missing evidence, and one next action from artifacts on disk; resume follows the same resolver.
 - **Local source intake and plan review** — previews pasted, Markdown, and CSV evidence with locators and provenance, then writes only after human confirmation; reviews existing plans directly without editing them.
 - **Optional source adapters** — a versioned read-only contract and fixture-tested Jira issue normalizer preserve project scope, locators, revisions, and bounded excerpts; manual intake remains available without a connected provider.
+- **Offline Playwright report ingestion and coverage** — reads an existing JSON reporter file without running Playwright, then produces Markdown/JSON triage and coverage reports linked to investigation artifacts. Missing and ambiguous links stay visible; a run result does not prove the oracle or its root cause.
 - **Focused review and deterministic checks** — bounded risk/validation reviewers return cited findings; an optional read-only artifact checker runs manually, through an opt-in Codex hook, or in CI.
 
 ## How the workflow works
@@ -81,6 +82,7 @@ Each flow is identified by an existing ticket ID or a local investigation ID:
 | Challenge Part B | Fresh approved risks, dependencies, usable steps | `specs/<id>.plan.md` plus generated mapping in `risks.md` |
 | External generator | The plan file and the consuming project's test setup | Generated test files in that project |
 | Validate | Expected behavior plus test source or run evidence | `qa-artifacts/<id>/validation.md` |
+| Offline run report | Existing Playwright JSON report, investigation artifacts, run ID, and target | `qa-artifacts/<id>/run-report.json` and `run-report.md` with coverage links and failure triage |
 
 The `qa-artifacts/` and `specs/` directories are generated workflow output and are intentionally ignored by default. This repository documents and validates the process; it does not publish real investigation findings.
 
@@ -114,7 +116,7 @@ This repository has no application runtime, package manifest, dependency install
 
 - **A local case or CSV:** begin with Intake. Follow the [CSV approval-boundary walkthrough](qa-harness/walkthroughs/csv-case-to-approved-handoff.md).
 - **An existing plan or spec:** use direct plan review; do not force it through browser exploration.
-- **A failed run:** begin with triage. Follow the [spec-and-run walkthrough](qa-harness/walkthroughs/spec-and-failed-run.md).
+- **A failed run:** begin with triage. For an existing Playwright JSON report, use the [offline report command](qa-harness/checks/README.md#offline-playwright-run-report), then review its coverage links and triage. Follow the [spec-and-run walkthrough](qa-harness/walkthroughs/spec-and-failed-run.md).
 - **Existing investigation artifacts:** ask for `status <id>` or `resume <id>`; resume stops at human approval and generator handoff boundaries.
 
 See [compatibility](docs/compatibility.md) before selecting a client and
@@ -226,7 +228,9 @@ Changes to shared rules affect every adapter, so start with [`CONTRIBUTING.md`](
 
 ## Roadmap and known limits
 
-The repository includes a fixture-tested Jira reference normalizer and adapter contract. Live Atlassian client bindings and adapters for Xray, Azure DevOps, and Confluence remain future work; optional API/database oracle integrations belong to consuming projects.
+All seven planned development phases are merged to `master`. See the [Phase 7 verification report](docs/release/phase-7-verification.md) for what was checked and what remains unverified: real-human adoption, live browser behavior, consuming-project test generation, and live provider access.
+
+The repository includes a fixture-tested Jira reference normalizer and adapter contract, but no live Atlassian client binding. Adapters for Xray, Azure DevOps, and Confluence remain future work; optional API/database oracle integrations belong to consuming projects.
 
 ## License
 
