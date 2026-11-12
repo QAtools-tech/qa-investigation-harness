@@ -10,6 +10,7 @@ export function buildTraceabilityMatrix(coverage, { investigationId = coverage.i
     const decisionStatus = decisionLinks.length > 1 || decisionLinks[0]?.status === "unresolved" ? "ambiguous" : decisionLinks[0]?.freshness ?? "unknown";
     const planLink = links.find((link) => link.kind === "decision-plan" && link.fromId === decision?.id);
     const fileLink = links.find((link) => link.kind === "plan-test" && link.fromId?.toUpperCase() === mapping?.tcId.toUpperCase());
+    const duplicateTcMapping = mapping && mappings.some((candidate, index) => index !== mappingIndex && candidate.tcId.toUpperCase() === mapping.tcId.toUpperCase());
     const tests = matchedTestsByMapping[mappingIndex] ?? [];
     const validation = findings.filter((item) => item.tcId === mapping?.tcId.toUpperCase());
     const approved = decision && /^approve/i.test(decision.decision);
@@ -20,7 +21,7 @@ export function buildTraceabilityMatrix(coverage, { investigationId = coverage.i
       decision: decision ? `${decision.id}: ${decision.decision} (${decisionStatus})` : decisionStatus === "ambiguous" ? "ambiguous decisions" : "no decision",
       case: mapping ? mapping.tcId : "",
       mappedTest: mapping?.file ?? "",
-      mappingStatus: mapping ? ambiguousMappingIndexes.includes(mappingIndex) || decisionStatus === "ambiguous" ? "ambiguous" : !planLink || planLink.status !== "linked" ? planLink?.status ?? "unresolved" : fileLink?.status === "missing" ? "missing file" : approved && current ? "current" : approved ? "stale or unknown approval" : "not approved" : risk ? "no mapped test" : "no linked risk",
+      mappingStatus: mapping ? ambiguousMappingIndexes.includes(mappingIndex) || duplicateTcMapping || decisionStatus === "ambiguous" ? "ambiguous" : !planLink || planLink.status !== "linked" ? planLink?.status ?? "unresolved" : !fileLink ? "unresolved" : fileLink.status === "missing" ? "missing file" : approved && current ? "current" : approved ? "stale or unknown approval" : "not approved" : risk ? "no mapped test" : "no linked risk",
       execution: selectedRun ? (tests.length ? tests.map((test) => `${test.projectName ?? "unknown project"}: ${test.status}`).join("; ") : "no matching result") : "no run selected",
       validation: validation.length ? validation.map((item) => `${item.conformance}: ${item.finding} (${item.locator})`).join("; ") : "not reviewed",
       sources: [requirement?.locator, risk?.locator, decision?.locator, mapping?.locator, plans.find((item) => item.tcId.toUpperCase() === mapping?.tcId.toUpperCase())?.locator, validation[0]?.recordLocator, validation[0]?.locator].filter(Boolean).join("; "),

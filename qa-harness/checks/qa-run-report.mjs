@@ -6,6 +6,7 @@ import { buildCoverage } from "./coverage-report.mjs";
 import { parsePlaywrightReport, PlaywrightReportError } from "./playwright-json.mjs";
 import { renderRunReport } from "./run-report-render.mjs";
 import { buildTraceabilityMatrix, renderTraceabilityMatrix } from "./traceability-matrix.mjs";
+import { buildGeneratorHandoff } from "./generator-handoff.mjs";
 
 const valueFlags = ["--report", "--root", "--investigation", "--run-id", "--target", "--revision", "--captured-at", "--json-out", "--markdown-out"];
 const requiredFlags = ["--report", "--root", "--investigation", "--run-id", "--target", "--json-out", "--markdown-out"];
@@ -14,7 +15,7 @@ class UsageError extends Error {}
 class InputError extends Error {}
 
 function usage() {
-  return "Usage: node qa-harness/checks/qa-run-report.mjs --report <file> --root <project> --investigation <id> --run-id <id> --target <name> --json-out <file> --markdown-out <file> [--revision <rev>] [--captured-at <ISO-time>] [--force]\n       node qa-harness/checks/qa-run-report.mjs matrix --root <project> --investigation <id> [--report <file> --run-id <id> --target <name> [--revision <rev>]] [--markdown-out <file> --csv-out <file>] [--force]";
+  return "Usage: node qa-harness/checks/qa-run-report.mjs --report <file> --root <project> --investigation <id> --run-id <id> --target <name> --json-out <file> --markdown-out <file> [--revision <rev>] [--captured-at <ISO-time>] [--force]\n       node qa-harness/checks/qa-run-report.mjs matrix --root <project> --investigation <id> [--report <file> --run-id <id> --target <name> [--revision <rev>]] [--markdown-out <file> --csv-out <file>] [--force]\n       node qa-harness/checks/qa-run-report.mjs handoff --root <project> --investigation <id>";
 }
 
 export function parseArgs(argv) {
@@ -174,7 +175,32 @@ async function matrixMain(argv) {
   return 0;
 }
 
+async function handoffMain(argv) {
+  const values = new Map();
+  for (let index = 0; index < argv.length; index += 1) {
+    const flag = argv[index];
+    if (!["--root", "--investigation"].includes(flag) || values.has(flag) || !argv[index + 1] || argv[index + 1].startsWith("--")) {
+      throw new UsageError(`Invalid or duplicate handoff option ${flag}.`);
+    }
+    values.set(flag, argv[++index]);
+  }
+  for (const flag of ["--root", "--investigation"]) if (!values.has(flag)) throw new UsageError(`Missing required ${flag}.`);
+  const root = path.resolve(values.get("--root"));
+  await realpath(root);
+  const coverage = await buildCoverage(root, values.get("--investigation"), null, { includeMatrixEvidence: true });
+  const matrix = buildTraceabilityMatrix(coverage);
+  process.stdout.write(buildGeneratorHandoff(matrix));
+  return 0;
+}
+
 export async function main(argv = process.argv.slice(2)) {
+  if (argv[0] === "handoff") {
+    try { return await handoffMain(argv.slice(1)); }
+    catch (error) {
+      process.stderr.write(`${error.message}\n`);
+      return error instanceof UsageError || error instanceof InputError || error.message.includes("Invalid investigation ID") || error.message.includes("escapes") ? 2 : 3;
+    }
+  }
   if (argv[0] === "matrix") {
     try { return await matrixMain(argv.slice(1)); }
     catch (error) {
