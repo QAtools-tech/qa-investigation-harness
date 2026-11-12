@@ -32,8 +32,8 @@ in that checkout and say:
 
 > Continue QA for CASE-701.
 
-Use the ID you actually confirmed if it differs from this example. Expect
-the same risk-review stop from the saved artifacts. The next action should
+Replace CASE-701 throughout this walkthrough if you confirmed a different ID.
+Expect the same risk-review stop from the saved artifacts. The next action should
 point you to `risks.md` to record your decisions. Ask “Status for CASE-701”
 in another fresh chat. Expect the resolver's detailed read-only output.
 Compare the saved artifacts before and after both requests at this stop.
@@ -68,12 +68,13 @@ did not create intake records or imply approval.
    Expect R1 and its changed flow-model revision to be named. Compare the
    plan and risk table before and after. The old decision and plan entry
    should be intact.
-2. **Approved handoff.** In the separate CSV case, review a proposed risk
-   and record your human decision in the disposable artifact, following
+2. **Approved handoff.** In the separate CSV case, review the risk grounded in
+   the recorded Open filter steps and record your decision, following
    [Challenge Part B's prerequisites](../stages/03-challenge.md). When the
    decision matches the current risk, oracle, and dependencies, say
-   “Continue QA for CASE-701.” Expect a generator-ready plan path and a next
-   action for you to pass it to the consuming project's generator. If the
+   “Continue QA for CASE-701.” Expect the exported plan path and the next
+   action for you to prepare the handoff to the consuming project's generator.
+   If no existing seed was found, the plan must identify that prerequisite. If the
    test root was never supplied, expect the output to be described as
    unchecked. Supply a known-empty consuming-project root if you also want
    to check the distinction between unchecked and confirmed absent.

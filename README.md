@@ -136,7 +136,7 @@ This repository has no application runtime, package manifest, dependency install
 In Codex or Claude Code, say **“Start QA with this case”** and supply the
 case, plan, observations, or failed run. The assistant suggests a route and
 shows the next action. To return to saved work, say
-**“Continue QA for <investigation-id>”** in a new chat with the same checkout.
+**`Continue QA for <investigation-id>`** in a new chat with the same checkout.
 
 Use your team's ticket reference or confirm a local investigation ID if
 needed. Existing specs keep their names. See the

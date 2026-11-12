@@ -7,7 +7,7 @@ below, follow exactly.
 ## Guided QA in chat
 
 Ask “Start QA with this case” and supply the case or other evidence, or say
-“Continue QA for <investigation-id>” to pick up saved work. For guided
+`Continue QA for <investigation-id>` to pick up saved work. For guided
 requests, including direct review and triage from supplied evidence, read
 [the guided chat instructions](qa-harness/GUIDED-CHAT.md). Use the contract
 and shared resolver they reference.

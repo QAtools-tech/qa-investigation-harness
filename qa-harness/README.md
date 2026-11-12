@@ -87,7 +87,7 @@ the current Copilot harness; see [migration guidance](../docs/migration.md).
 ### Claude Code
 
 Say **“Start QA with this case”** and supply your evidence. To pick up saved
-work, say **“Continue QA for <investigation-id>.”** See the
+work, say **`Continue QA for <investigation-id>`** See the
 [guided chat walkthrough](walkthroughs/guided-chat.md).
 
 - `CLAUDE.md` (repo root) points here automatically
@@ -112,7 +112,7 @@ with `npx playwright init-agents --loop=claude`, then point it at
 ### Codex
 
 Say **“Start QA with this case”** and supply your evidence. To pick up saved
-work, say **“Continue QA for <investigation-id>.”** See the
+work, say **`Continue QA for <investigation-id>`** See the
 [guided chat walkthrough](walkthroughs/guided-chat.md).
 
 - `AGENTS.md` (repo root) is read automatically; project skills provide
