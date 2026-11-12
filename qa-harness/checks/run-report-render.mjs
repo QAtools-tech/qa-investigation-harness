@@ -15,7 +15,7 @@ function boundedText(value, limit = 2000) {
 }
 
 function markdownText(value) {
-  const text = boundedText(String(value ?? "—")).replace(/\r?\n/g, " ");
+  const text = boundedText(String(value ?? "—")).replace(/[\r\n]+/g, " ");
   return text
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -48,7 +48,7 @@ export function buildTriage(run, coverage) {
             name: boundedText(attachment.name ?? "Attachment", 500),
             contentType: boundedText(attachment.contentType ?? "", 200) || null,
             path: attachment.availability === "available" && typeof attachment.path === "string"
-              ? boundedText(attachment.path)
+              ? attachment.path
               : null,
             availability: attachment.availability === "available" && typeof attachment.path === "string" ? "available" : "unavailable",
           })),
@@ -163,7 +163,7 @@ export function renderRunReport(run, coverage, { attachmentLinkPrefix = "" } = {
         name: boundedText(attachment.name ?? "Attachment", 500),
         contentType: boundedText(attachment.contentType ?? "", 200) || null,
         path: attachment.availability === "available" && typeof attachment.path === "string"
-          ? boundedText(attachment.path)
+          ? attachment.path
           : null,
         availability: attachment.availability === "available" && typeof attachment.path === "string" ? "available" : "unavailable",
       })),
