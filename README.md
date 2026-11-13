@@ -39,10 +39,12 @@ investigation ID + case, spec, or run
 - **Human-gated risk review** — generates proposed risks; only the human marks them approved or rejected.
 - **Generator-compatible output** — writes `specs/<id>.plan.md` in a plain plan structure a test-generation agent can consume.
 - **Post-generation auditing** — checks generated assertions against approved oracles and can mutation-check assertion strength.
-- **Read-only status and resume** — reports completed work, blockers, missing evidence, and one next action from artifacts on disk; resume follows the same resolver.
+- **Guided progress, status, and resume** — shows investigation position, blockers, missing or unchecked evidence, and one owner-specific next action; explicit status and resume follow the shared resolver ([chat guide](qa-harness/GUIDED-CHAT.md)).
 - **Local source intake and plan review** — previews pasted, Markdown, and CSV evidence with locators and provenance, then writes only after human confirmation; reviews existing plans directly without editing them.
 - **Optional source adapters** — a versioned read-only contract and fixture-tested Jira issue normalizer preserve project scope, locators, revisions, and bounded excerpts; manual intake remains available without a connected provider.
-- **Offline Playwright report ingestion and coverage** — reads an existing JSON reporter file without running Playwright, then produces Markdown/JSON triage and coverage reports linked to investigation artifacts. Failure triage can link to file-backed attachments that resolve inside the project root; attachment contents are never read or copied. Missing and ambiguous links stay visible; a run result does not prove the oracle or its root cause.
+- **Traceability matrix and actionable gaps** — links requirements, risks, approvals, plan entries, tests, runs, and validation; each row points to the earliest useful next action and keeps the reason visible.
+- **Generator round trip** — guides the human from an approved plan through the external generator, mapped-source check, Playwright report import, matrix review, run comparison, and Stage 5 validation. The consuming project's generator still owns test code and execution.
+- **Offline Playwright reports and comparison** — reads existing JSON reports without running Playwright, producing coverage and failure triage with safe in-root attachment links. Attachment contents are never read or copied. Saved runs can be compared only for the same investigation and exact target; missing or ambiguous evidence stays visible, and runner status does not prove oracle conformance or root cause.
 - **Focused review and deterministic checks** — bounded risk/validation reviewers return cited findings; structural artifact and Markdown-link checks plus the built-in Node suite run locally and in CI, with an opt-in Codex hook for artifact diagnostics.
 
 ## How the workflow works
@@ -62,6 +64,8 @@ flowchart LR
     R -->|Failure evidence| TR[Direct triage]
     R -->|Existing Playwright JSON| RR[Offline report CLI]
     R -->|Two saved run reports| CMP[Offline comparison CLI]
+    R -->|Traceability matrix request| MX[Read-only matrix + next actions]
+    R -->|Generator handoff request| HO[Read-only ready / blocked summary]
     R -->|Recorded observations| EV
     RR --> REP[Coverage links and failure triage]
     REP -->|Saved JSON reports| CMP
@@ -75,15 +79,24 @@ flowchart LR
     CH --> HR{Human decides each risk}
     HR -->|Missing, stale, or rejected| STOP
     HR -->|Fresh approved risk| PLAN[Challenge Part B: plan + mapping]
-    PLAN --> GEN[Consuming project's test-generation agent]
+    PLAN -->|Human passes approved plan| GEN[Consuming project's test-generation agent]
+    PLAN -. Approved plan .-> HO
+    HO -. Human action guidance .-> GEN
     GEN --> TEST[Generated tests in consuming project]
     TEST --> VAL[Validate approved oracle against test source]
     REP -. Selected run evidence .-> VAL
+    TEST -. Optional matrix review .-> MX
+    REP -. Optional matrix view .-> MX
 ```
 
 Use [the investigation contract](qa-harness/CONTRACT.md) to choose the first stage from the evidence you have; a spec or run can enter directly without a browser exploration. Use `status <investigation-id>` for a read-only progress report, or `resume <investigation-id>` to continue from the next eligible stage. Missing evidence, a missing or stale approval, and the external generator handoff are explicit stops.
 
 For the deeper artifact contract and boundaries, see [Architecture](docs/architecture.md).
+After an approved plan reaches the consuming project's generator, follow the
+[generator round-trip guide](qa-harness/GENERATOR-ROUND-TRIP.md) to check mapped
+source, import Playwright results, review the matrix, compare saved runs, and
+continue to Stage 5. Exact commands and limits are in the
+[checks guide](qa-harness/checks/README.md).
 
 ## Stage outputs
 
@@ -101,10 +114,12 @@ Each flow is identified by an existing ticket ID or a local investigation ID:
 | Human review | Proposed risk table and current dependencies | Human-recorded `APPROVED` / `REJECTED` decisions; the harness never decides |
 | Challenge Part B | Fresh approved risks, dependencies, usable steps | `specs/<id>.plan.md` plus generated mapping in `risks.md` |
 | External generator | The plan file and the consuming project's test setup | Generated test files in that project |
+| Generator handoff summary | Current approvals and unambiguous mappings | Read-only ready/blocked cases and the human-owned next action; see the [round-trip guide](qa-harness/GENERATOR-ROUND-TRIP.md) |
 | Validate | Current approvals, mapping, plan, and mapped test source | `qa-artifacts/<id>/validation.md`; optional assertion mutation is explicit and restored |
 | Triage | Identifiable failure or run evidence | Observed failure, separate possible causes, and missing context |
 | Offline run report | Existing Playwright JSON report, investigation artifacts, run ID, and target | `qa-artifacts/<id>/run-report.json` and `qa-artifacts/<id>/run-report.md` with coverage links, failure triage, and safe in-root attachment links |
-| Offline run comparison | Two saved harness run reports for the same investigation and exact target | JSON and Markdown outcome comparison; no new test execution or root-cause inference |
+| Offline run comparison | Two saved harness run reports for the same investigation and exact target | JSON and Markdown outcome comparison; no new test execution or root-cause inference; [usage](qa-harness/checks/README.md#compare-saved-run-reports) |
+| Traceability matrix | Investigation artifacts, mapped tests, optional selected run | Requirement-to-validation evidence with visible gaps and one next action per row; [usage](qa-harness/checks/README.md#traceability-matrix) |
 
 The `qa-artifacts/` and `specs/` directories are generated workflow output and are intentionally ignored by default. This repository documents and validates the process; it does not publish real investigation findings.
 
@@ -115,7 +130,7 @@ The shared methodology lives in [`qa-harness/`](qa-harness/):
 - [`RULES.md`](qa-harness/RULES.md) is the source of truth for hard rules, safety boundaries, artifact paths, and stage order.
 - [`stages/`](qa-harness/stages/) contains the status/resume resolver and tool-agnostic stage instructions.
 - [`INTAKE.md`](qa-harness/INTAKE.md) defines provenance, safe excerpts, revisions, and CSV preview behavior; [`fixtures/`](qa-harness/fixtures/README.md) contains synthetic examples.
-- [`checks/README.md`](qa-harness/checks/README.md) documents the deterministic checker, opt-in hook, and CI behavior.
+- [`checks/README.md`](qa-harness/checks/README.md) documents the deterministic checker, traceability matrix, evidence-based next actions, saved-run comparison, generator handoff summary, opt-in hook, and CI behavior.
 - [`adapters/README.md`](qa-harness/adapters/README.md) documents the normalized source record contract, Jira pilot, and unverified live client bindings.
 - [`.agents/skills/`](.agents/skills/) provides Codex stage and review shortcuts; Codex skills do not enforce reviewer tool restrictions.
 - [`.claude/agents/`](.claude/agents/) and [`.github/agents/`](.github/agents/) provide read/search-only focused reviewers.
@@ -147,6 +162,9 @@ and ask for what you need:
 
 The assistant shows the next action. To return to saved work, say
 **`Continue QA for <investigation-id>`** in a new chat with the same checkout.
+The [shared chat guide](qa-harness/GUIDED-CHAT.md) describes the progress
+summary; the [walkthrough](qa-harness/walkthroughs/guided-chat.md) gives
+copyable examples.
 
 Use your team's ticket reference or confirm a local investigation ID if
 needed. Existing specs keep their names. See the
