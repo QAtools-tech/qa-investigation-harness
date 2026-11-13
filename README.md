@@ -171,12 +171,14 @@ files. Identical files are reused. If an installed file differs, the installer
 reports the conflict before copying files. Review and reconcile it before retrying.
 
 Open a fresh session in the project and ask the agent to use the `qa` skill.
+GitHub Copilot installation targets project Agent Skills in Visual Studio and VS Code. For IDE requirements and verification status, see [Compatibility](docs/compatibility.md).
+
 Browser exploration requires Playwright MCP. Connected sources require a
 configured adapter, and test generation stays with the consuming project.
 
 ## Getting started
 
-This repository has no application runtime, package manifest, dependency install, Docker image, or database. The optional artifact checker and its tests use Node.js built-ins only; no package install is required.
+This repository has no application runtime, Docker image, or database. The optional artifact checker and its tests use Node.js built-ins only; no package install is required.
 
 For the complete user journey and scenario-based instructions, start with the
 [QA Harness User Guide](qa-harness/USER-GUIDE.md). The guide explains entry
