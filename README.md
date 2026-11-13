@@ -154,13 +154,13 @@ Playwright MCP configuration is kept per tool:
 From the root of your project, use the command for your client:
 
 ```sh
-npx qa-investigation-harness install --client claude
-npx qa-investigation-harness install --client codex
-npx qa-investigation-harness install --client copilot
+npx --yes --package qa-investigation-harness@preview qa-investigation-harness install --client claude
+npx --yes --package qa-investigation-harness@preview qa-investigation-harness install --client codex
+npx --yes --package qa-investigation-harness@preview qa-investigation-harness install --client copilot
 ```
 
-These registry commands require a published release. To try an unpublished
-build, run `npm pack` from this repository and use
+These commands install the npm `preview` release. To try an unpublished build,
+run `npm pack` from this repository and use
 `npx --package <absolute-path-to-tarball> qa-investigation-harness install --client <client>`
 from the consuming project.
 
