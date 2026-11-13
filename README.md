@@ -150,6 +150,11 @@ Playwright MCP configuration is kept per tool:
 
 This repository has no application runtime, package manifest, dependency install, Docker image, or database. The optional artifact checker and its tests use Node.js built-ins only; no package install is required.
 
+For the complete user journey and scenario-based instructions, start with the
+[QA Harness User Guide](qa-harness/USER-GUIDE.md). The guide explains entry
+routes, each investigation step, generator handoff, result review, and how to
+keep documentation aligned with the canonical stage rules.
+
 ### Start in chat
 
 In Codex, Claude Code, or GitHub Copilot Chat in VS Code, attach the evidence
@@ -178,6 +183,34 @@ needed. Existing specs keep their names. See the
 - **Existing plan or spec:** use direct read-only plan review; do not force it through browser exploration.
 - **Failure evidence:** start with triage, keeping the observed failure separate from possible causes. For an existing Playwright JSON report, use the [offline report command](qa-harness/checks/README.md#offline-playwright-run-report), then review coverage links and triage. See the [spec-and-run walkthrough](qa-harness/walkthroughs/spec-and-failed-run.md).
 - **Existing investigation artifacts:** ask for `status <id>` or `resume <id>`; status reads only, and resume follows the artifact-based resolver.
+
+### End-to-end: case to reviewed test results
+
+1. **Choose an entry route.** Start with local intake for a case, direct review
+   for an existing plan, Model for recorded observations, triage for a failure,
+   or status/resume for saved artifacts. The [user guide](qa-harness/USER-GUIDE.md#choose-a-starting-point)
+   covers each scenario.
+2. **Confirm the evidence preview.** For intake, check the proposed ID, source
+   mapping/grouping, normalized content, and missing inputs before confirming
+   any write. For browser exploration, supply a confirmed non-production URL
+   and interactive test access.
+3. **Build the evidence-backed plan.** Explore when live behavior is needed,
+   model observed states and transitions, then challenge the flow to propose
+   risks. Review and record each risk decision yourself; export only after
+   current approvals and dependencies are confirmed.
+4. **Hand off to the project generator.** Give the consuming project's
+   generator `specs/<id>.plan.md`. The project owns generated test code and
+   Playwright execution; the harness never generates or runs tests.
+5. **Return with generated files and report.** Check mapped test paths, run the
+   consuming project's tests, and import its existing Playwright JSON report
+   with the real run ID and target. Review the traceability matrix and use
+   Stage 5 Part A to compare assertions with approved oracles. A runner pass
+   alone does not prove oracle conformance.
+
+For exact commands, recovery paths, and separate scenario walkthroughs, use
+the [full harness user guide](qa-harness/USER-GUIDE.md). Use the
+[generator round-trip guide](qa-harness/GENERATOR-ROUND-TRIP.md) for report
+import, matrix, comparison, and validation details.
 
 See [compatibility](docs/compatibility.md) before selecting a client and
 [migration guidance](docs/migration.md) before moving legacy artifacts.
@@ -273,6 +306,7 @@ The harness requires a non-production target URL and an interactive test account
 ├── qa-harness/
 │   ├── RULES.md                 # Shared rules and artifact contract
 │   ├── README.md                # Multi-tool usage guide
+│   ├── USER-GUIDE.md            # Full user journey and scenario guide
 │   ├── adapters/                # Optional read-only source adapters
 │   ├── checks/                  # Structural checks, report CLI, and Node tests
 │   ├── fixtures/                # Synthetic intake, run-report, and walkthrough data
