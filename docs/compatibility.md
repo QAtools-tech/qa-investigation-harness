@@ -1,11 +1,12 @@
 # Compatibility and verification status
 
-The [project installer](../README.md#install-the-harness-into-another-project) places the shared harness and ten skill entry points in a consuming project. Claude Code uses `.claude/skills/`, Codex uses `.agents/skills/`, and GitHub Copilot uses `.github/skills/`. Visual Studio requires version 18.5 or later and a Copilot subscription. Packed installation and artifact checks passed for all three targets. Live skill discovery and investigation handoff remain unverified.
+The [project installer](../README.md#install-the-harness-into-another-project) places the shared harness and ten skill entry points in a consuming project. Claude Code uses `.claude/skills/`, Codex uses `.agents/skills/`, and GitHub Copilot uses `.github/skills/`. The published npm `preview` install and bundled artifact checker passed for all three targets. Live workflow checks reached different boundaries in Claude Code and VS Code Copilot. Codex workflow execution and the full Visual Studio IDE remain unverified.
 
 This page describes the files in this repository and what has actually been
 verified. Repository adapters are instructions and fixtures; their presence
-does not prove a host loads them or follows them. Statuses are checked as of
-2026-11-11 and must be rechecked after client updates.
+does not prove a host loads them or follows them. Installer and workflow smoke
+evidence below was checked on 2026-11-13; upstream client requirements must be
+rechecked after client updates.
 
 ## Evidence labels
 
@@ -20,10 +21,10 @@ does not prove a host loads them or follows them. Statuses are checked as of
 
 | Client/harness | Repository entry points | Requirements and capability | Evidence and limits |
 |---|---|---|---|
-| Codex | `AGENTS.md`; `.agents/skills/qa-*`; optional `qa-harness/hooks/codex-hooks.example.json` | Node.js 20+ for the built-in checks and report tool. Browser stages require Playwright MCP; Codex users register it with the command in `AGENTS.md`. The hook is opt-in and runs after `apply_patch`; it is diagnostic, not a policy boundary. | Documented; wrapper/checker behavior has fixture tests. No fresh Codex-client adoption run was performed for this release check. Reviewer skills do not enforce read-only tool access. |
-| Claude Code | `CLAUDE.md`; `.claude/skills/qa-*`; `.claude/agents/qa-*`; root `.mcp.json` | Browser stages require the configured Playwright MCP server. The checker/report tool uses Node.js 20+ and no package install. | Documented; wrapper/reviewer fixtures are tested. No fresh Claude Code runtime adoption run was performed. |
+| Codex | `AGENTS.md`; `.agents/skills/qa-*`; optional `qa-harness/hooks/codex-hooks.example.json` | Node.js 20+ for the built-in checks and report tool. Browser stages require Playwright MCP; Codex users register it with the command in `AGENTS.md`. The hook is opt-in and runs after `apply_patch`; it is diagnostic, not a policy boundary. | Packed installation and bundled-checker execution passed for all ten skills. Codex workflow execution was not verified because the tested account could not use the required model/MCP setup. Reviewer skills do not enforce read-only tool access. |
+| Claude Code | `CLAUDE.md`; `.claude/skills/qa-*`; `.claude/agents/qa-*`; root `.mcp.json` | Browser stages require the configured Playwright MCP server. The checker/report tool uses Node.js 20+ and no package install. | Packed install passed. Live `/qa` intake preview and confirmation gate were exercised; the separate Claude Code artifact-save step was not verified. |
 | VS Code **Local** harness | `.github/prompts/qa-*.prompt.md`; `.github/agents/*.agent.md`; `.vscode/mcp.json` | Prompt files use the `.github/prompts/` workspace location and are invoked in the Local harness. Playwright's VS Code agent generator currently documents VS Code 1.105 or newer. | Documented; static adapter and fixture tests pass. No fresh VS Code runtime adoption run was performed. The Local harness is deprecated and scheduled for removal in February 2027; check Microsoft's migration guidance before relying on it. |
-| GitHub Copilot harness in VS Code | `.github/copilot-instructions.md`; `.github/agents/*.agent.md`; shared `AGENTS.md` guidance | Use plain-language start, status, and continue requests. The repository instructions point to the [shared guide](../qa-harness/GUIDED-CHAT.md). VS Code Local prompt files remain a separate entry point. | Repository wiring documented. Verify instruction discovery and routing in a fresh Copilot Chat session. Browser and generator handoff behavior are unverified. |
+| GitHub Copilot harness in VS Code | `.github/copilot-instructions.md`; `.github/agents/*.agent.md`; shared `AGENTS.md` guidance | Use plain-language start, status, and continue requests. The repository instructions point to the [shared guide](../qa-harness/GUIDED-CHAT.md). VS Code Local prompt files remain a separate entry point. | Packed install and live skill resolution passed. Status and resume produced the expected blocker for missing non-production URL/access. Full browser and generator handoff remain unverified. |
 | Cursor and other clients | No repository-native entry point | Use shared Markdown rules manually only if the client can read the repository. | Not set up or verified. |
 
 Official client references checked for this matrix:
