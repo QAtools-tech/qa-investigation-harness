@@ -33,8 +33,10 @@ guidance. The hook returns diagnostics as context and never blocks, edits, or
 approves.
 
 The hook checks only Codex `apply_patch` tool activity. Shell-based edits and
-other clients should run the manual command. CI runs the same checker against
-the synthetic fixture and runs its Node test suite.
+other clients should run the manual command. CI also packs the installer,
+installs it into clean consumers for Claude Code, Codex, and Copilot, checks
+that each receives all ten skills, and runs the bundled artifact checker
+against its synthetic fixture. CI then runs the repository's Node test suite.
 
 ## Limits
 
