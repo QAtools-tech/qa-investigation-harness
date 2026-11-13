@@ -50,7 +50,7 @@ investigation ID + case, spec, or run
 ## How the workflow works
 
 ```mermaid
-%%{init: {'flowchart': {'nodeSpacing': 16, 'rankSpacing': 26}}}%%
+%%{init: {'flowchart': {'nodeSpacing': 16, 'rankSpacing': 26, 'useMaxWidth': false}}}%%
 flowchart TD
     U[One investigation ID + supplied evidence] --> R{Choose entry from evidence}
     R -->|Existing artifacts| SR[status or resume]
