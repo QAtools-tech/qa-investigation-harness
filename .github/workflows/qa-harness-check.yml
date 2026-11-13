@@ -22,5 +22,7 @@ jobs:
         run: node qa-harness/checks/qa-check.mjs --root qa-harness/fixtures/checks
       - name: Run offline Playwright report fixture
         run: node --test qa-harness/checks/qa-run-report.test.mjs
+      - name: Run installer upgrade tests
+        run: node --test scripts/installer.test.mjs
       - name: Run checker tests
         run: node --test qa-harness/checks/*.test.mjs

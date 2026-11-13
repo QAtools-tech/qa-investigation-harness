@@ -174,6 +174,31 @@ reports the conflict before copying files. Review and reconcile it before retryi
 Open a fresh session in the project and ask the agent to use the `qa` skill.
 GitHub Copilot installation targets project Agent Skills in Visual Studio and VS Code. For IDE requirements and verification status, see [Compatibility](docs/compatibility.md).
 
+### Upgrade an installed harness
+
+The current published `0.1.0` package supports `install` only. The explicit
+`upgrade` command will be available in the next npm release. Once available,
+run it from the consuming project:
+
+```sh
+npx --yes --package qa-investigation-harness@latest qa-investigation-harness upgrade --client claude
+npx --yes --package qa-investigation-harness@latest qa-investigation-harness upgrade --client codex
+npx --yes --package qa-investigation-harness@latest qa-investigation-harness upgrade --client copilot
+```
+
+Upgrade replaces only managed harness files that still match their recorded
+upstream version. Locally edited files stay in place; the new upstream version
+is saved under `.qa-investigation-harness/conflicts/<version>/` for review.
+After resolving a file, pass its project-relative path with
+`--accept-local <path>` to record it as the new baseline. Investigation history
+under `qa-artifacts/` is outside the installer's managed files.
+
+  For example, after merging a local edit to `qa-harness/RULES.md`:
+
+  ```sh
+  npx --yes --package qa-investigation-harness@latest qa-investigation-harness upgrade --client claude --accept-local qa-harness/RULES.md
+  ```
+
 Browser exploration requires Playwright MCP. Connected sources require a
 configured adapter, and test generation stays with the consuming project.
 

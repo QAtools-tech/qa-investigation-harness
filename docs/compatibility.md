@@ -2,6 +2,8 @@
 
 The [project installer](../README.md#install-the-harness-into-another-project) places the shared harness and ten skill entry points in a consuming project. Claude Code uses `.claude/skills/`, Codex uses `.agents/skills/`, and GitHub Copilot uses `.github/skills/`. The published npm `latest` install and bundled artifact checker passed for all three targets. Installed intake reached the preview and human-confirmation boundary in Claude Code and VS Code Copilot. Codex workflow execution and the full Visual Studio IDE remain unverified.
 
+The unreleased installer upgrade command tracks managed file hashes and updates files that still match their previous upstream version. Locally changed or untracked collisions are kept in place, with the incoming version saved under `.qa-investigation-harness/conflicts/<version>/`; users can review and resolve a conflict, then pass `--accept-local <path>` to adopt the resolved file as the next baseline. Upstream-removed files are preserved and reported for manual review. Files under `qa-artifacts/` are outside installer scope. These behaviors are fixture-tested and packed-smoke-tested; the published `0.1.0` package supports install only, so upgrade requires a later package release.
+
 This page describes the files in this repository and what has actually been
 verified. Repository adapters are instructions and fixtures; their presence
 does not prove a host loads them or follows them. Installer and workflow smoke
