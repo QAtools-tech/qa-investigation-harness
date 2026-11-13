@@ -97,7 +97,7 @@ test("refuses invalid state versions before writing bundle files", () => {
 
 test("upgrades untouched files from the published 0.1.0 baseline", () => {
   const context = fixture();
-  const oldRules = readFileSync(path.join(repoRoot, "qa-harness", "RULES.md"));
+  const oldRules = Buffer.from(readFileSync(path.join(repoRoot, "qa-harness", "RULES.md"), "utf8").replace(/\r?\n/g, "\r\n"));
   writeProjectFile(context, "qa-harness/RULES.md", oldRules);
 
   const result = runCli(context, "upgrade", "--client", "claude");
