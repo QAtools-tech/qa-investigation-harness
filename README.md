@@ -49,8 +49,10 @@ investigation ID + case, spec, or run
 
 ## How the workflow works
 
+[Open the full workflow diagram in a pan-and-zoom viewer](https://mermaid.live/view#pako:eJxtVcFy4jgQ_ZUuX_YQkr1z2CoCnkAqYMpmqFR5c-jYbaONLXlaEoSK8-9bkg2xM3MEvX56_dT9_BFkKqdgCkFRqVN2QDawW_wrAQB-ppEkEPJI2ogSjVASVgu4AW2bphKUAx1FTjKjF7i9_Qfij_lBKU1A0vAZClb1FfHZUcYO2IbvQhshS0A2osDM6BaSONUGjdWgGJi0remlq0m6ou60hSSNCfNbJaszNKxKJq0BZQ6vlcreiPW4rKNqYZNu6N0AVaIUrxWBNliSu0tiTTloo5q-sKubo_bH82TfwmqTbpmOgk6gleWMJlBj0whZTvzVtdDa9XP1Y8iUUEWZoRweBSMIrS218DhL50oWorRMOfC1I8yxMcQ9wePMG7vadD9XG0-4tDVKyFw51xqaTlkLq0U6eqy7On8ZFa57mYoB61dRWmU1CNlY00Kyi7bpBmsCYXxPJxTm5Y-v1lQoHYduKGthG6cLwZSZQRce0ckaUfxAUVmmq08t7K7VhgWW9OcbtxWeTyzKg4HHJNq0EMdpVBSVkARMjWID86fVqHZ3UqDx6My1sgfpFubr7bUyU3WDLLSSv1czZoSvohLmDDUaFu_A9MuSNi2snwcj2B_egHTjhZkzXo-4HkgSo1EMB5S5KoovpmU0YHL2neHvfo5z0Laukc8jrpgyxTnloF418dE_s24h3Pcgj4I43KZzdSR2I14J-dYtSNG7P3Y63HZT6r1y7o7M6udn4XnD_UfYvxywsuay1eHeU2yUvG1Y5dabAD_jJ7gBIQ2xs-VIgFmmrDQthM9p-N5UiglOwhyG76slNvqgLqPXU3_1zSBqJ-83D9bRIl2rnCq32oa6lg2j1GL4JlfCX1a41buM4mWHu03osc--7eg-ScnL_bZW0X3iAeuoT8x11Bk1X6bzA1YVyZJg6zJ1NoVtHG2jJFwAC_12kTNf-oJl_NFtdU6ZyEkDYXbwwN7iZTzc4InrsaJJl5X_-XgZCu_RP5j0AbBpWPlFEPqthe3TbPNd3f20W9mbS6z16hx2EDkNau2MvRC6mhYewo3LMm1rHw6snJ6_NBjS5rbsht_NA5YkzYj4DmZDKrhzTkR9C5E77-7ttgpKK3J0T-VwD2Efig-hlwi7MNml_a5R7m934eZyciytl-DwvnA_e0r3WIkcDX31phizigBLFFIbT9dn_3Bx7uCa7i5mrsPkFO5nT8Ob7iBqXBtYfQWK_6I47Pp5RPodOcAFEwhq4hpFHkzhIzAHqv33O6cCbWWCzwkEaI1KzjILpmDY0gQC27j2FgJLxvrrb1a2PARTKLDS9Pk_J8ywow).
+
 ```mermaid
-%%{init: {'flowchart': {'nodeSpacing': 16, 'rankSpacing': 26, 'useMaxWidth': false}}}%%
+%%{init: {'flowchart': {'nodeSpacing': 16, 'rankSpacing': 26}}}%%
 flowchart TD
     U[One investigation ID + supplied evidence] --> R{Choose entry from evidence}
     R -->|Existing artifacts| SR[status or resume]
