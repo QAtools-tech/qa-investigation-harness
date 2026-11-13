@@ -50,29 +50,45 @@ investigation ID + case, spec, or run
 ## How the workflow works
 
 ```mermaid
+%%{init: {'flowchart': {'nodeSpacing': 16, 'rankSpacing': 26}}}%%
 flowchart TD
-    A[Collect evidence and model the flow]
-    B[Propose risks and expected outcomes]
-    C[Human reviews and approves risks]
-    D[Export approved plan and test mapping]
-    E[Consuming project generates tests]
-    F[Validate tests against approved expectations]
-    A --> B --> C --> D --> E --> F
+    U[One investigation ID + supplied evidence] --> R{Choose entry from evidence}
+    R -->|Existing artifacts| SR[status or resume]
+    SR -->|status| S[Read-only progress and blockers]
+    SR -->|resume| N[Next eligible stage or named stop]
+    R -->|Case or CSV| IN[Preview source, mapping, and missing evidence]
+    R -->|Selected Jira issue| JA[Configured read-only adapter]
+    JA --> IN
+    IN -->|Human confirms preview| ID[investigation.md]
+    IN -->|Missing or ambiguous input| STOP[Name it and wait]
+    R -->|Existing plan or spec| PR[Direct read-only plan review]
+    R -->|Failure evidence| TR[Direct triage]
+    R -->|Existing Playwright JSON| RR[Offline report CLI]
+    R -->|Two saved run reports| CMP[Offline comparison CLI]
+    R -->|Traceability matrix request| MX[Read-only matrix + next actions]
+    R -->|Generator handoff request| HO[Read-only ready / blocked summary]
+    R -->|Recorded observations| EV
+    RR --> REP[Coverage links and failure triage]
+    REP -->|Saved JSON reports| CMP
+    ID --> EV{Evidence route}
+    EV -->|Non-production URL + interactive account| EX[Explore with Playwright snapshot]
+    EV -->|Recorded or imported observations| MOD[Model states and transitions]
+    EV -->|Required evidence missing| STOP
+    EX --> OBS[exploration.md]
+    OBS --> MOD
+    MOD --> CH[Challenge Part A: PROPOSED risks]
+    CH --> HR{Human decides each risk}
+    HR -->|Missing, stale, or rejected| STOP
+    HR -->|Fresh approved risk| PLAN[Challenge Part B: plan + mapping]
+    PLAN -->|Human passes approved plan| GEN[Consuming project's test-generation agent]
+    PLAN -. Approved plan .-> HO
+    HO -. Human action guidance .-> GEN
+    GEN --> TEST[Generated tests in consuming project]
+    TEST --> VAL[Validate approved oracle against test source]
+    REP -. Selected run evidence .-> VAL
+    TEST -. Optional matrix review .-> MX
+    REP -. Optional matrix view .-> MX
 ```
-
-**Start where your evidence fits.** The diagram shows the full investigation path.
-
-| What you have | Where to start |
-| --- | --- |
-| Local case, CSV, or selected Jira issue | Intake: preview evidence and confirm before saving |
-| Recorded observations | Model the flow directly |
-| Existing investigation | Check status or resume |
-| Existing plan or spec | Review it directly |
-| Failure evidence | Triage the failure |
-| Playwright JSON report | Import coverage and triage evidence |
-| Two saved run reports | Compare results and evidence gaps |
-| Traceability matrix request | Review coverage and next actions |
-| Generator handoff request | Check readiness and blockers |
 
 Use [the investigation contract](qa-harness/CONTRACT.md) to choose the first stage from the evidence you have; a spec or run can enter directly without a browser exploration. Use `status <investigation-id>` for a read-only progress report, or `resume <investigation-id>` to continue from the next eligible stage. Missing evidence, a missing or stale approval, and the external generator handoff are explicit stops.
 
