@@ -1,0 +1,8 @@
+{
+  "name": "qa-investigation-harness",
+  "version": "0.1.0",
+  "description": "Install the QA Investigation Harness and its Agent Skills into a project.",
+  "license": "MIT",
+  "bin": { "qa-investigation-harness": "bin/qa-investigation-harness.mjs" },
+  "files": ["bin/", "qa-harness/", ".agents/skills/"]
+}
