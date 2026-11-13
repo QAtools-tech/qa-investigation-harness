@@ -25,6 +25,9 @@ evidence you already have. See the [public examples](examples.md) and
 [synthetic intake fixtures](fixtures/README.md) for CSV intake and direct
 review examples.
 
+For the end-to-end user journey, entry scenarios, and documentation
+maintenance guidance, start with the [QA Harness User Guide](USER-GUIDE.md).
+
 - **[INTAKE.md](INTAKE.md)** — local source, provenance, preview, and revision rules
 - **[stages/intake.md](stages/intake.md)** — preview/confirm/write workflow
 - **[stages/review-plan.md](stages/review-plan.md)** — direct read-only plan review
