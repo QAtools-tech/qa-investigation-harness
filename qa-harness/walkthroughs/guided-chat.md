@@ -90,3 +90,19 @@ did not create intake records or imply approval.
 
 Record the client, prompt, first selected route, next action, and observed
 file changes for each rehearsal. Record unexercised routes separately.
+
+## Rehearse progress summaries
+
+Use synthetic evidence in a disposable checkout. Preserve each stage's full
+findings. Compare post-action summaries with these expectations; an explicit
+status request must use the resolver's detailed read-only format instead.
+
+| Scenario and setup | Prompt | Expected response |
+|---|---|---|
+| CASE-701 has proposed risks awaiting human decisions in `qa-artifacts/CASE-701/risks.md`. | “Continue QA for CASE-701.” | Position identifies pending risk review. Blocking names the human decision and `risks.md`. Next action belongs to the human and tells them to record decisions. Return prompt uses CASE-701. |
+| CASE-701 has a fresh approved plan and mapping, but no consuming-project root was supplied. | “Status for CASE-701.” | Use the detailed status format. Missing test-source evidence is marked “not checked,” not absent, and next action asks for the consuming-project root or mapped source path. |
+| CASE-701 has a fresh approved plan and mapping, and test generation has not yet been confirmed. | “Prepare the Playwright generator handoff for CASE-701.” | Position identifies the handoff. Summary names the plan path and the human-owned generator action; it does not imply generated tests exist. |
+| The user supplies a plan with clear steps and expected results, no conflicting claims, and no unresolved review findings. | “Review this plan.” | Findings remain visible and the route is identified as complete. Do not invent a next action, investigation ID, or return prompt. |
+
+These are guidance rehearsals, not proof that every client produces identical
+responses. Record the client and actual output when a client is exercised.
