@@ -157,6 +157,15 @@ function classify(before, after) {
   return "changed";
 }
 
+function nextComparisonAction(before, after) {
+  const evidence = new Set([before.evidence, after.evidence]);
+  if (evidence.has("ambiguous")) return "Resolve conflicting test or run evidence before comparing.";
+  if (evidence.has("unmapped")) return "Resolve the test mapping, then produce fresh reports for both runs.";
+  if (evidence.has("project-not-included")) return "Include the project in both run reports before comparing it.";
+  if (evidence.has("no-result")) return "Select or produce a run report that includes this mapped test.";
+  return "";
+}
+
 export function buildRunComparison(beforeReport, afterReport) {
   const before = validateReport(beforeReport, "Before report");
   const after = validateReport(afterReport, "After report");
@@ -180,19 +189,21 @@ export function buildRunComparison(beforeReport, afterReport) {
     for (const projectName of projects) {
       const beforeSide = sideEvidence(before, caseId, projectName);
       const afterSide = sideEvidence(after, caseId, projectName);
+      const classification = classify(beforeSide, afterSide);
       rows.push({
         caseId,
         projectName,
         before: beforeSide,
         after: afterSide,
-        classification: classify(beforeSide, afterSide),
+        classification,
+        nextAction: classification === "not comparable" ? nextComparisonAction(beforeSide, afterSide) : "",
       });
     }
   }
   rows.sort((left, right) => left.caseId.localeCompare(right.caseId) || left.projectName.localeCompare(right.projectName));
   const counts = Object.fromEntries(classifications.map((value) => [value, rows.filter((row) => row.classification === value).length]));
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     investigationId: before.investigationId,
     before: runMetadata(before),
     after: runMetadata(after),

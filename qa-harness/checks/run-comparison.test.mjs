@@ -219,3 +219,42 @@ test("preserves unnamed project results as ambiguous evidence", async () => {
     assert.equal(row.classification, "not comparable");
   }
 });
+
+test("recommends evidence-specific actions for incomparable rows", async () => {
+  const { buildRunComparison } = await import("./run-comparison.mjs");
+  const before = mappedReport({ runId: "before", status: "expected" });
+  const noResult = buildRunComparison(before, mappedReport({ runId: "after", status: null })).rows[0];
+  assert.equal(noResult.nextAction, "Select or produce a run report that includes this mapped test.");
+
+  const unmapped = buildRunComparison(before, mappedReport({ runId: "after", mappings: [] })).rows[0];
+  assert.equal(unmapped.nextAction, "Resolve the test mapping, then produce fresh reports for both runs.");
+
+  const excluded = buildRunComparison(
+    mappedReport({ runId: "before", status: "expected", projectNames: ["chromium"] }),
+    mappedReport({ runId: "after", status: null, projectNames: ["chromium", "firefox"] }),
+  ).rows.find((row) => row.projectName === "firefox");
+  assert.equal(excluded.nextAction, "Include the project in both run reports before comparing it.");
+
+  const base = mappedReport({ runId: "before" });
+  const conflicting = {
+    ...base,
+    coverage: { links: [...base.coverage.links, { ...base.coverage.links[0], toId: "tests/other.spec.ts" }] },
+  };
+  const ambiguous = buildRunComparison(conflicting, mappedReport({ runId: "after" })).rows[0];
+  assert.equal(ambiguous.nextAction, "Resolve conflicting test or run evidence before comparing.");
+});
+
+test("prioritizes the first comparison blocker and leaves observed rows unchanged", async () => {
+  const { buildRunComparison } = await import("./run-comparison.mjs");
+  const base = mappedReport({ runId: "before" });
+  const ambiguous = { ...base, coverage: { links: [...base.coverage.links, { ...base.coverage.links[0], toId: "tests/other.spec.ts" }] } };
+  const unmapped = mappedReport({ runId: "after", mappings: [] });
+  const priority = buildRunComparison(ambiguous, unmapped).rows[0];
+  assert.equal(priority.nextAction, "Resolve conflicting test or run evidence before comparing.");
+
+  const bothObserved = buildRunComparison(base, mappedReport({ runId: "after" })).rows[0];
+  assert.equal(bothObserved.classification, "unchanged");
+  assert.equal(bothObserved.before.evidence, "observed");
+  assert.equal(bothObserved.after.evidence, "observed");
+  assert.equal(bothObserved.nextAction, "");
+});

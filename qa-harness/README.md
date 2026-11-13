@@ -29,6 +29,7 @@ review examples.
 - **[stages/intake.md](stages/intake.md)** — preview/confirm/write workflow
 - **[stages/review-plan.md](stages/review-plan.md)** — direct read-only plan review
 - **[checks/README.md](checks/README.md)** — deterministic artifact checker, offline Playwright run report, optional hook, and CI scope
+- **[GENERATOR-ROUND-TRIP.md](GENERATOR-ROUND-TRIP.md)** — approved plan, external generation, report import, and Stage 5 review
 - **[adapters/README.md](adapters/README.md)** — optional read-only source adapters and Jira pilot compatibility
 
 Use `status <investigation-id>` for a read-only progress report or

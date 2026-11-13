@@ -129,7 +129,9 @@ transitions. Missing or ambiguous mapping/results and projects excluded from a
 run are `not comparable`; the comparison does not infer test additions,
 removals, oracle conformance, product quality, or root cause. `expected` means
 the runner reported a passing outcome, not that an assertion checked its
-oracle. The comparison JSON uses schema version `1`.
+oracle. Each not-comparable row includes a `nextAction` and retains both
+evidence states and reasons. Its JSON uses schema version `2`; saved run-report
+inputs remain schema version `2`.
 
 ## Traceability matrix
 
@@ -162,6 +164,14 @@ validation separate. Missing and ambiguous evidence stays visible. CSV cells
 are quoted and formula-like imported values are prefixed for spreadsheet
 safety. Existing outputs require `--force`; outputs cannot replace the selected
 Playwright report.
+
+Each matrix row also includes a `nextAction` for its earliest unresolved
+prerequisite: requirement/risk linkage, human decision, generated-test mapping,
+run evidence, then Stage 5 validation. A fresh rejected decision does not
+recommend test generation. A recorded validation finding recommends reviewing
+its cited evidence; the consuming project's generator remains responsible for
+any test-code change. Actions explain the current gap and never repair evidence
+or change a decision.
 
 To prepare a read-only handoff summary for the consuming project's generator:
 

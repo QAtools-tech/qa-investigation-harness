@@ -80,6 +80,11 @@ may export only current approved revisions that are not already mapped, and
 must obey the append-only TC rules. A rejected-only review has no exportable
 risks; report that state and wait for the human's next decision.
 
+For the generator handoff and return path, see the
+[generator round-trip guide](../GENERATOR-ROUND-TRIP.md). The guide connects
+these resolver outcomes to generated-source checks, Playwright report import,
+and Stage 5 without changing this resolver's eligibility rules.
+
 ## Status action (read-only)
 
 Report in this shape, omitting a field only when it truly has no value:
