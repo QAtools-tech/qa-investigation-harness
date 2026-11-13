@@ -42,11 +42,13 @@ The shared rules and stage files are the source of truth. Keep adapters thin; do
 
 ## Local checks
 
-This repository has no application runtime, package manifest, or dependency install. The checker, offline report tool, and Node.js test suite use built-in modules; Node.js 20 or newer is required. Run the full suite and repository checks before opening a pull request:
+This repository has no application runtime or dependency install. Its package manifest ships the `npx` installer; the installer, checker, offline report tool, and Node.js test suite use built-in modules. Node.js 20 or newer is required. Run the full suite and repository checks before opening a pull request:
 
 ```powershell
 git diff --check
 node --test qa-harness/checks/*.test.mjs qa-harness/adapters/*.test.mjs qa-harness/adapters/jira/*.test.mjs
+node --test scripts/installer.test.mjs
+node scripts/check-packed-installer.mjs
 node qa-harness/checks/qa-check.mjs
 rg --files -uu | Sort-Object
 rg -n -i --hidden --glob '!**/.git/**' --glob '!**/.codebase-memory/**' '(api[_-]?key|secret|password|token|private[_-]?key|BEGIN [A-Z ]+PRIVATE KEY|postgres://|mongodb://)' .
