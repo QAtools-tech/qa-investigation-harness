@@ -1,5 +1,7 @@
 # Compatibility and verification status
 
+The [project installer](../README.md#install-the-harness-into-another-project) places the shared harness and ten skill entry points in a consuming project. Claude Code uses `.claude/skills/`, Codex uses `.agents/skills/`, and GitHub Copilot uses `.github/skills/`. Visual Studio requires version 18.5 or later and a Copilot subscription. Packed installation and artifact checks passed for all three targets. Live skill discovery and investigation handoff remain unverified.
+
 This page describes the files in this repository and what has actually been
 verified. Repository adapters are instructions and fixtures; their presence
 does not prove a host loads them or follows them. Statuses are checked as of

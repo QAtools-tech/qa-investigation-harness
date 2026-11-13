@@ -1,5 +1,7 @@
 # QA Investigation Harness — multi-tool
 
+To use the harness in another repository, follow the [project installation instructions](../README.md#install-the-harness-into-another-project).
+
 A risk-driven investigation layer that sits in front of your project's
 Playwright test-generation agent, whichever AI coding tool you use. It never
 writes test code itself: it walks a flow, surfaces risks for a human to
