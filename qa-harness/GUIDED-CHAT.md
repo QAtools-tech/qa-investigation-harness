@@ -61,18 +61,31 @@ After a guided action, keep the stage's required preview or findings. Add a
 short summary with the confirmed investigation ID and position, or the route
 name if there is no confirmed ID. Include:
 
+- **Position** with the stage or route and current state (for example, “ready
+  for risk review” or “blocked on missing project path”).
 - **Completed** when there is work to report.
+- **Blocking** when a decision or input prevents progress. Name the decision,
+  person, and artifact or input needed.
+- **Missing evidence** when a required source or artifact is absent or has not
+  been inspected. Say “not checked” when an external path was not supplied;
+  do not present it as confirmed absent.
 - `Next · <owner>` with one concrete action. Name the input, decision, or
   artifact needed when blocked.
 - **Return with** when a saved investigation can be resumed by ID.
+
+Show only fields with useful evidence. For ordinary guided actions, do not
+repeat the detailed status report. Explicit status requests and resume
+responses use the resolver's detailed format. Do not invent a blocker,
+missing-evidence item, or next action when none is supported.
 
 For example, using an illustrative investigation ID:
 
 > **QA-142 · Ready for risk review**<br>
 > **Completed:** Recorded the checkout flow and proposed three risks.<br>
+> **Blocking:** Human review is pending in `qa-artifacts/QA-142/risks.md`.<br>
 > **Next · You:** Review the three risks in `qa-artifacts/QA-142/risks.md` and record your decisions.<br>
 > **Return with:** “Continue QA for QA-142.”
 
 If a direct review or triage is complete and no meaningful follow-up remains,
 say it is complete. Explicit status requests use the resolver's detailed
-format in place of this summary.
+format, and resume actions must report the same status shape after work.
