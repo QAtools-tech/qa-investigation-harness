@@ -16,6 +16,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Smoke-test packed installer for each client
+        run: node scripts/check-packed-installer.mjs
       - name: Check synthetic artifacts
         run: node qa-harness/checks/qa-check.mjs --root qa-harness/fixtures/checks
       - name: Run offline Playwright report fixture
